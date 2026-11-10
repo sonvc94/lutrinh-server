@@ -11,6 +11,8 @@ x-app: &app
     target: app
   environment:
     LUTRINH_MEDIA_ACCEL: "1"
+    # Test phase: admin login = username + password. `on` asks for the TOTP again (.env).
+    LUTRINH_ADMIN_TOTP: ${LUTRINH_ADMIN_TOTP:-off}
     # Only Caddy can reach :8000 (not published), so its X-Forwarded-For is believed.
     FORWARDED_ALLOW_IPS: "*"
     TZ: Asia/Ho_Chi_Minh

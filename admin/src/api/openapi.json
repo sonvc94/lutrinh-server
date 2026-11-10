@@ -647,6 +647,7 @@
     "additionalProperties": false,
     "properties": {
      "code": {
+      "default": "",
       "maxLength": 32,
       "title": "Code",
       "type": "string"
@@ -655,13 +656,32 @@
       "maxLength": 1024,
       "title": "Password",
       "type": "string"
+     },
+     "username": {
+      "maxLength": 40,
+      "title": "Username",
+      "type": "string"
      }
     },
     "required": [
-     "password",
-     "code"
+     "username",
+     "password"
     ],
     "title": "LoginIn",
+    "type": "object"
+   },
+   "LoginOptionsOut": {
+    "additionalProperties": false,
+    "properties": {
+     "totpRequired": {
+      "title": "Totprequired",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "totpRequired"
+    ],
+    "title": "LoginOptionsOut",
     "type": "object"
    },
    "ManualLegIn": {
@@ -3316,6 +3336,27 @@
      }
     },
     "summary": "Log in",
+    "tags": [
+     "session"
+    ]
+   }
+  },
+  "/admin/api/v1/session/options": {
+   "get": {
+    "operationId": "options_admin_api_v1_session_options_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/LoginOptionsOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "What the login form asks for",
     "tags": [
      "session"
     ]

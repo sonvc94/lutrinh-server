@@ -12,7 +12,7 @@ export type SessionState = 'loading' | 'in' | 'out'
 
 interface SessionValue {
   state: SessionState
-  login(password: string, code: string): Promise<void>
+  login(username: string, password: string, code: string): Promise<void>
   logout(): Promise<void>
 }
 
@@ -43,8 +43,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const login = useCallback(async (password: string, code: string) => {
-    const s = await unwrap(api.POST('/admin/api/v1/session', { body: { password, code } }))
+  const login = useCallback(async (username: string, password: string, code: string) => {
+    const s = await unwrap(
+      api.POST('/admin/api/v1/session', { body: { username, password, code } }),
+    )
     setCsrfToken(s.csrfToken)
     setState('in')
   }, [])

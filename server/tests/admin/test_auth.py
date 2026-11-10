@@ -1,4 +1,5 @@
-"""Auth (page 04 §G): session required everywhere, CSRF on writes, password + TOTP login."""
+"""Auth (page 04 §G): session required everywhere, CSRF on writes, username + password login
+(TOTP only while ``LUTRINH_ADMIN_TOTP=on``)."""
 
 from __future__ import annotations
 
@@ -15,7 +16,7 @@ from lutrinh.api.admin import PREFIX
 from lutrinh.db.engine import make_sessionmaker
 from lutrinh.db.models import AdminSession, utcnow
 from lutrinh.services import auth
-from tests.admin.conftest import PASSWORD, Admin
+from tests.admin.conftest import PASSWORD, USERNAME, Admin
 
 PARAMS = {
     "route_id": "rt_00000000",
@@ -28,6 +29,7 @@ PARAMS = {
     "n": "0",
 }
 LOGIN = ("POST", f"{PREFIX}/session")
+OPTIONS = ("GET", f"{PREFIX}/session/options")  # what the login form asks for: public
 
 
 def _walk(routes: Iterable[Any]) -> Iterator[tuple[str, set[str]]]:
@@ -52,12 +54,15 @@ def _admin_endpoints(admin: Admin) -> list[tuple[str, str]]:
     return out
 
 
-def _login(c: TestClient, code: str, password: str = PASSWORD) -> int:
-    return c.post(f"{PREFIX}/session", json={"password": password, "code": code}).status_code
+def _login(
+    c: TestClient, code: str = "", password: str = PASSWORD, username: str = USERNAME
+) -> int:
+    body = {"username": username, "password": password, "code": code}
+    return c.post(f"{PREFIX}/session", json=body).status_code
 
 
 def test_every_admin_route_answers_401_without_a_session(admin: Admin, anon: TestClient) -> None:
-    endpoints = [e for e in _admin_endpoints(admin) if e != LOGIN]
+    endpoints = [e for e in _admin_endpoints(admin) if e not in (LOGIN, OPTIONS)]
     assert len(endpoints) >= 30
     for method, path in endpoints:
         r = anon.request(method, path, json={})
@@ -69,7 +74,9 @@ def test_every_admin_route_answers_401_without_a_session(admin: Admin, anon: Tes
 
 def test_every_write_without_csrf_token_answers_403(admin: Admin, client: TestClient) -> None:
     token = client.headers.pop("X-CSRF-Token")
-    writes = [(m, p) for m, p in _admin_endpoints(admin) if m != "GET" and (m, p) != LOGIN]
+    writes = [
+        (m, p) for m, p in _admin_endpoints(admin) if m != "GET" and (m, p) not in (LOGIN, OPTIONS)
+    ]
     assert len(writes) >= 20
     for method, path in writes:
         r = client.request(method, path, json={})
@@ -81,9 +88,11 @@ def test_every_write_without_csrf_token_answers_403(admin: Admin, client: TestCl
     assert r.status_code == 201
 
 
-def test_login_with_password_and_totp_sets_a_host_cookie(admin: Admin, anon: TestClient) -> None:
+def test_login_with_username_and_password_sets_a_host_cookie(
+    admin: Admin, anon: TestClient
+) -> None:
     assert anon.get(f"{PREFIX}/session").status_code == 401
-    r = anon.post(f"{PREFIX}/session", json={"password": PASSWORD, "code": admin.totp.now()})
+    r = anon.post(f"{PREFIX}/session", json={"username": USERNAME, "password": PASSWORD})
     assert r.status_code == 200
     cookie = r.headers["set-cookie"]
     assert cookie.startswith("__Host-lt_session=")
@@ -95,26 +104,56 @@ def test_login_with_password_and_totp_sets_a_host_cookie(admin: Admin, anon: Tes
     assert session.json()["csrfToken"] == r.json()["csrfToken"]
 
 
-def test_login_with_a_wrong_totp_fails(admin: Admin, anon: TestClient) -> None:
+def test_login_with_a_wrong_totp_fails(totp_on: Admin, anon: TestClient) -> None:
+    admin = totp_on
     wrong = f"{(int(admin.totp.now()) + 1) % 1_000_000:06d}"
-    r = anon.post(f"{PREFIX}/session", json={"password": PASSWORD, "code": wrong})
+    r = anon.post(
+        f"{PREFIX}/session", json={"username": USERNAME, "password": PASSWORD, "code": wrong}
+    )
     assert r.status_code == 401
     assert r.json()["error"]["code"] == "bad_credentials"
     assert "set-cookie" not in r.headers
     assert anon.get(f"{PREFIX}/session").status_code == 401
 
 
-def test_login_with_a_wrong_password_and_a_valid_totp_fails(admin: Admin, anon: TestClient) -> None:
-    assert _login(anon, admin.totp.now(), password="sai-mat-khau-roi-nhe") == 401
+def test_login_with_a_wrong_password_fails(admin: Admin, anon: TestClient) -> None:
+    assert _login(anon, password="sai-mat-khau-roi-nhe") == 401
+    assert _login(anon, password="123456") == 401
+    assert anon.get(f"{PREFIX}/session").status_code == 401
 
 
-def test_a_totp_code_is_accepted_once(admin: Admin, anon: TestClient) -> None:
+def test_login_with_a_wrong_username_fails(admin: Admin, anon: TestClient) -> None:
+    assert _login(anon, username="root") == 401
+    assert _login(anon, username="") == 401
+
+
+def test_login_with_a_wrong_password_and_a_valid_totp_fails(
+    totp_on: Admin, anon: TestClient
+) -> None:
+    assert _login(anon, totp_on.totp.now(), password="sai-mat-khau-roi-nhe") == 401
+
+
+def test_password_alone_is_enough_while_totp_is_off(admin: Admin, anon: TestClient) -> None:
+    assert anon.get(f"{PREFIX}/session/options").json() == {"totpRequired": False}
+    assert _login(anon, "000000") == 200  # a stray code is ignored, not checked
+
+
+def test_totp_on_asks_for_the_code_again(totp_on: Admin, anon: TestClient) -> None:
+    assert anon.get(f"{PREFIX}/session/options").json() == {"totpRequired": True}
+    assert _login(anon) == 401  # password alone no longer opens a session
+    assert _login(anon, "000000") == 401
+    assert _login(anon, totp_on.totp.now()) == 200
+
+
+def test_a_totp_code_is_accepted_once(totp_on: Admin, anon: TestClient) -> None:
+    admin = totp_on
     code = admin.totp.now()
     assert _login(anon, code) == 200
     assert _login(anon, code) == 401
 
 
-def test_a_backup_code_replaces_the_totp_once(admin: Admin, anon: TestClient) -> None:
+def test_a_backup_code_replaces_the_totp_once(totp_on: Admin, anon: TestClient) -> None:
+    admin = totp_on
     code = admin.backup_codes[0]
     assert _login(anon, code.lower().replace("-", " ")) == 200
     assert _login(anon, code) == 401
@@ -123,8 +162,8 @@ def test_a_backup_code_replaces_the_totp_once(admin: Admin, anon: TestClient) ->
 
 def test_five_failures_lock_the_login_and_send_a_mail(admin: Admin, anon: TestClient) -> None:
     for _ in range(5):
-        assert _login(anon, "000000", password="sai-mat-khau-roi-nhe") == 401
-    r = anon.post(f"{PREFIX}/session", json={"password": PASSWORD, "code": admin.totp.now()})
+        assert _login(anon, password="sai-mat-khau-roi-nhe") == 401
+    r = anon.post(f"{PREFIX}/session", json={"username": USERNAME, "password": PASSWORD})
     assert r.status_code == 429
     assert r.json()["error"]["code"] == "rate_limited"
     assert 0 < int(r.headers["Retry-After"]) <= 15 * 60
@@ -136,11 +175,14 @@ def test_logout_ends_the_session(admin: Admin, client: TestClient) -> None:
     assert client.get(f"{PREFIX}/session").status_code == 401
 
 
-def test_idle_and_absolute_expiry(admin: Admin) -> None:
+def test_idle_and_absolute_expiry(totp_on: Admin) -> None:
+    admin = totp_on
     factory = make_sessionmaker(admin.app.state.engine)
     with factory() as db:
         now = utcnow()
-        new = auth.login(db, admin.settings, admin.mailer, PASSWORD, admin.totp.now(), now=now)
+        new = auth.login(
+            db, admin.settings, admin.mailer, USERNAME, PASSWORD, admin.totp.now(), now=now
+        )
         db.commit()
         later = now + timedelta(hours=1, minutes=59)
         assert auth.current(db, admin.settings, new.token, now=later) is not None
@@ -153,6 +195,7 @@ def test_idle_and_absolute_expiry(admin: Admin) -> None:
             db,
             admin.settings,
             admin.mailer,
+            USERNAME,
             PASSWORD,
             admin.totp.generate_otp(step),
             now=now + timedelta(seconds=60),
@@ -165,7 +208,8 @@ def test_idle_and_absolute_expiry(admin: Admin) -> None:
         assert alive is None
 
 
-def test_admin_reset_replaces_totp_and_ends_sessions(admin: Admin, client: TestClient) -> None:
+def test_admin_reset_replaces_totp_and_ends_sessions(client: TestClient, totp_on: Admin) -> None:
+    admin = totp_on
     factory = make_sessionmaker(admin.app.state.engine)
     with factory() as db:
         enrolment = auth.enrol(db, admin.settings, PASSWORD + "-moi", reset=True)
@@ -174,3 +218,16 @@ def test_admin_reset_replaces_totp_and_ends_sessions(admin: Admin, client: TestC
     assert _login(client, admin.totp.now()) == 401
     new = pyotp.TOTP(enrolment.totp_secret)
     assert _login(client, new.now(), password=PASSWORD + "-moi") == 200
+
+
+def test_set_password_keeps_the_totp_secret_and_ends_sessions(
+    client: TestClient, totp_on: Admin
+) -> None:
+    factory = make_sessionmaker(totp_on.app.state.engine)
+    with factory() as db:
+        created = auth.set_password(db, totp_on.settings, "123456", username="admin")
+        db.commit()
+    assert created is False
+    assert client.get(f"{PREFIX}/session").status_code == 401
+    assert _login(client, totp_on.totp.now(), password=PASSWORD) == 401
+    assert _login(client, totp_on.totp.now(), password="123456") == 200  # same TOTP secret

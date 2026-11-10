@@ -457,6 +457,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/api/v1/session/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What the login form asks for */
+        get: operations["options_admin_api_v1_session_options_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/api/v1/stats": {
         parameters: {
             query?: never;
@@ -776,10 +793,20 @@ export interface components {
         };
         /** LoginIn */
         LoginIn: {
-            /** Code */
+            /**
+             * Code
+             * @default
+             */
             code: string;
             /** Password */
             password: string;
+            /** Username */
+            username: string;
+        };
+        /** LoginOptionsOut */
+        LoginOptionsOut: {
+            /** Totprequired */
+            totpRequired: boolean;
         };
         /** ManualLegIn */
         ManualLegIn: {
@@ -2220,6 +2247,26 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    options_admin_api_v1_session_options_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoginOptionsOut"];
+                };
             };
         };
     };

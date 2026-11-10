@@ -28,9 +28,15 @@ class Problem(Model):
 
 
 class LoginIn(Model):
+    username: str = Field(max_length=40)
     password: str = Field(max_length=1024)
-    # 6-digit TOTP, or one of the 10-character backup codes (hyphen/spaces allowed).
-    code: str = Field(max_length=32)
+    # 6-digit TOTP, or one of the 10-character backup codes (hyphen/spaces allowed); only read
+    # while TOTP is on (`LoginOptionsOut.totp_required`).
+    code: str = Field(default="", max_length=32)
+
+
+class LoginOptionsOut(Model):
+    totp_required: bool
 
 
 class SessionOut(Model):

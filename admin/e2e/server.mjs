@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
  * Playwright's web server: a fresh lutrinh server for one e2e run (never the dev data).
- * Data under /Volumes/wdblack/tmp/lutrinh-admin-web/e2e/<run>; the admin's password and TOTP
- * secret go to e2e/current.json there for the test. Serves admin/dist (run `npm run build` first).
+ * Data under /Volumes/wdblack/tmp/lutrinh-admin-web/e2e/<run>; the admin (admin / 123456, set with
+ * `lutrinh admin set-password`, TOTP off) goes to e2e/current.json there for the test. Serves admin/dist (run `npm run build` first).
  * Stopped by Playwright when the run ends. No worker process: the test runs the due jobs itself
  * with e2e/process_jobs.py (offline routers).
  */
@@ -31,18 +31,13 @@ const uv = (args, input) =>
   execFileSync('uv', ['run', ...args], { cwd: server, env, input, encoding: 'utf8' })
 
 uv(['alembic', 'upgrade', 'head'])
-const password = 'e2e-mat-khau-' + Math.random().toString(36).slice(2, 12)
-const out = uv(['lutrinh', 'admin', 'create', '--password-stdin'], password + '\n')
-const secret = /Khóa nhập tay: (\S+)/.exec(out)?.[1]
-const backup = out
-  .split('\n')
-  .map((l) => l.trim())
-  .filter((l) => /^[A-Za-z0-9-]{10,12}$/.test(l))
-if (!secret) throw new Error('no TOTP secret in `lutrinh admin create` output')
-writeFileSync(
-  join(ROOT, 'current.json'),
-  JSON.stringify({ data, password, secret, backup, port: PORT }),
+const username = 'admin'
+const password = '123456'
+uv(
+  ['lutrinh', 'admin', 'set-password', '--username', username, '--password-stdin'],
+  password + '\n',
 )
+writeFileSync(join(ROOT, 'current.json'), JSON.stringify({ data, username, password, port: PORT }))
 
 const child = spawn('uv', ['run', 'lutrinh', 'serve', '--port', PORT], {
   cwd: server,

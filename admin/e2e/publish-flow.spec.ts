@@ -1,5 +1,5 @@
 /**
- * The acceptance flow (task server-admin-web): log in with password + TOTP, import a 3-stop GPX,
+ * The acceptance flow (task server-admin-web): log in with username + password, import a 3-stop GPX,
  * publish, read the code, and look it up on the public API (what the app does) with curl; upload a
  * photo, process it like the worker and see it come back from the server (tile, list cover); and
  * the map over Hoàng Sa / Trường Sa (R30).
@@ -10,7 +10,6 @@ import { execFileSync } from 'node:child_process'
 import { mkdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { gradientPng } from './png'
-import { totp } from './totp'
 
 const ROOT = process.env.LUTRINH_E2E_ROOT ?? '/Volumes/wdblack/tmp/lutrinh-admin-web/e2e'
 const SCREENS = '/Volumes/wdblack/tmp/lutrinh-admin-web/screens'
@@ -20,8 +19,8 @@ const TITLE = 'Ba điểm quanh Hồ Gươm'
 
 interface Creds {
   data: string
+  username: string
   password: string
-  secret: string
   port: string
 }
 
@@ -64,8 +63,9 @@ test('log in, import a 3-stop GPX, publish, and the code finds the route', async
   await expect(page).toHaveURL(/\/admin\/dang-nhap/)
   await expect(page.getByRole('heading', { name: 'Đăng nhập' })).toBeVisible()
   await shot(page, 'login')
+  await page.getByLabel('Tên đăng nhập').fill(c.username)
   await page.getByLabel('Mật khẩu').fill(c.password)
-  await page.getByLabel('Mã 6 số từ ứng dụng xác thực').fill(totp(c.secret))
+  await expect(page.getByLabel('Mã 6 số từ ứng dụng xác thực')).toHaveCount(0)
   await page.getByRole('button', { name: 'Đăng nhập' }).click()
 
   // A: route list (empty on a fresh server)

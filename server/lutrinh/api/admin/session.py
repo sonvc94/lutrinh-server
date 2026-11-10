@@ -1,4 +1,4 @@
-"""``/session``: log in (password + TOTP in one call), read, log out (page 04 §G)."""
+"""``/session``: log in (username + password, + TOTP while on), read, log out (page 04 §G)."""
 
 from __future__ import annotations
 
@@ -21,11 +21,18 @@ def _out(settings: SettingsDep, row: AdminSession) -> s.SessionOut:
     )
 
 
+@public.get(
+    "/session/options", response_model=s.LoginOptionsOut, summary="What the login form asks for"
+)
+def options(settings: SettingsDep) -> s.LoginOptionsOut:
+    return s.LoginOptionsOut(totp_required=settings.admin_totp)
+
+
 @public.post("/session", response_model=s.SessionOut, summary="Log in")
 def login(
     body: s.LoginIn, response: Response, db: DbDep, settings: SettingsDep, mailer: MailerDep
 ) -> s.SessionOut:
-    new = auth.login(db, settings, mailer, body.password, body.code)
+    new = auth.login(db, settings, mailer, body.username, body.password, body.code)
     audit.record(db, "session.login")
     db.commit()
     response.set_cookie(

@@ -3,6 +3,10 @@
 * ``lutrinh admin create``: the one admin account; prints the TOTP URI (scan it in any
   Authenticator app) and 10 single-use backup codes, once.
 * ``lutrinh admin reset``: new password, TOTP secret and backup codes; ends every session.
+* ``lutrinh admin set-password [--username admin]``: only the username and password of the
+  one admin (created when missing); the TOTP secret and codes stay; ends every session. Test
+  phase: ``echo 123456 | lutrinh admin set-password --username admin --password-stdin``.
+  Login asks for the TOTP only while ``LUTRINH_ADMIN_TOTP=on``.
 
 The password is asked twice on the terminal, or read from stdin with ``--password-stdin``.
 
@@ -43,15 +47,23 @@ def _admin(args: argparse.Namespace) -> int:
     settings = get_settings()
     password = _password(args.password_stdin)
     engine = make_engine(settings.db_url)
+    enrolment = None
+    created = False
     try:
         with make_sessionmaker(engine)() as session:
             try:
-                enrolment = auth.enrol(session, settings, password, reset=args.action == "reset")
+                if args.action == "set-password":
+                    created = auth.set_password(session, settings, password, username=args.username)
+                else:
+                    enrolment = auth.enrol(
+                        session, settings, password, reset=args.action == "reset"
+                    )
             except auth.AuthError as exc:
                 messages = {
                     "admin_exists": "Đã có tài khoản quản trị; dùng `lutrinh admin reset`.",
                     "no_admin": "Chưa có tài khoản quản trị; dùng `lutrinh admin create`.",
-                    "weak_password": f"Mật khẩu cần ít nhất {auth.PASSWORD_MIN} ký tự.",
+                    "weak_password": f"Mật khẩu cần ít nhất {settings.admin_password_min} ký tự.",
+                    "bad_username": "Tên đăng nhập dài 1–40 ký tự.",
                 }
                 print(messages.get(exc.code, exc.code), file=sys.stderr)
                 return 1
@@ -59,6 +71,11 @@ def _admin(args: argparse.Namespace) -> int:
             session.commit()
     finally:
         engine.dispose()
+    if enrolment is None:
+        verb = "Đã tạo" if created else "Đã cập nhật"
+        print(f"{verb} tài khoản quản trị «{args.username}»; mọi phiên đăng nhập đã bị đóng.")
+        print("Đăng nhập chỉ cần tên đăng nhập + mật khẩu khi LUTRINH_ADMIN_TOTP=off (mặc định).")
+        return 0
     print("TOTP (quét bằng app Authenticator):")
     print(enrolment.totp_uri)
     print(f"Khóa nhập tay: {enrolment.totp_secret}")
@@ -108,8 +125,9 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="lutrinh")
     sub = parser.add_subparsers(dest="command", required=True)
     admin = sub.add_parser("admin", help="the admin account")
-    admin.add_argument("action", choices=["create", "reset"])
+    admin.add_argument("action", choices=["create", "reset", "set-password"])
     admin.add_argument("--password-stdin", action="store_true")
+    admin.add_argument("--username", default=auth.USERNAME, help="set-password only")
     admin.set_defaults(run=_admin)
     seed_cmd = sub.add_parser("seed-sample", help="publish the spec sample route, print its code")
     seed_cmd.add_argument("--sample", type=Path, default=None, help="sample directory")

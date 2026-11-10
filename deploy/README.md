@@ -30,7 +30,7 @@ sudo usermod -aG docker "$USER"   # đăng xuất / vào lại
 docker compose version            # cần ≥ 2.24
 ```
 
-Đồng hồ phải đúng (TOTP): `timedatectl` phải báo `System clock synchronized: yes`.
+Đồng hồ phải đúng (khi bật TOTP): `timedatectl` phải báo `System clock synchronized: yes`.
 Tường lửa: chỉ mở 22 (SSH bằng khoá), 80, 443 (chế độ 1); chế độ 3 không cần mở 80/443.
 
 ## 2. Lấy mã nguồn
@@ -81,7 +81,7 @@ deploy/bootstrap.sh
 ```
 
 Lệnh tạo thư mục dữ liệu (chủ uid 10001, dùng `sudo` khi cần), build image (lần đầu vài phút),
-chạy migration, hỏi mật khẩu quản trị hai lần (≥ 14 ký tự) rồi in **mã TOTP** (quét bằng app
+chạy migration, hỏi mật khẩu quản trị hai lần (≥ 6 ký tự lúc thử nghiệm) rồi in **mã TOTP** (quét bằng app
 Authenticator) và **10 mã dự phòng** (in ra giấy; không lưu ở đâu khác), cuối cùng `up -d`.
 
 Kiểm tra:
@@ -96,6 +96,21 @@ Thử nhanh với lộ trình mẫu (in ra `Mã: XXXX-XXXX`, mỗi lần chạy 
 ```sh
 docker compose -f deploy/compose.yaml exec app lutrinh seed-sample
 ```
+
+**Giai đoạn thử nghiệm: đăng nhập chỉ bằng tên đăng nhập + mật khẩu** (không TOTP, ở mọi môi
+trường). `LUTRINH_ADMIN_TOTP=off` (mặc định trong `.env`). Đặt tài khoản `admin` / `123456` trên
+một cơ sở dữ liệu đang chạy (giữ nguyên dữ liệu; đóng mọi phiên đăng nhập; tạo tài khoản nếu chưa
+có; mật khẩu tối thiểu `LUTRINH_ADMIN_PASSWORD_MIN` = 6 ký tự):
+
+```sh
+printf '%s\n' 123456 | docker compose -f deploy/compose.yaml run --rm -T app \
+  lutrinh admin set-password --username admin --password-stdin
+```
+
+Bật lại TOTP sau này, không cần sửa mã: đặt `LUTRINH_ADMIN_TOTP=on` trong `deploy/.env`, chạy
+`lutrinh admin reset` (bên dưới: in mã TOTP + 10 mã dự phòng; đặt mật khẩu mạnh, và
+`LUTRINH_ADMIN_PASSWORD_MIN=14` trong `deploy/app.env`), rồi `docker compose -f deploy/compose.yaml up -d`.
+`set-password` giữ nguyên khóa TOTP cũ nên `admin reset` chỉ cần khi chưa từng lưu các mã đó.
 
 Quên mật khẩu / mất máy TOTP (không có "quên mật khẩu" qua thư):
 

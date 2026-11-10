@@ -31,6 +31,12 @@ class Settings(BaseSettings):
     login_max_failures: int = 5
     login_window_minutes: float = 15
     login_lock_minutes: float = 15
+    # Test phase: login is username + password only. `LUTRINH_ADMIN_TOTP=on` asks for the TOTP
+    # (or a backup code) again; the secret and codes made by `admin create|reset` stay valid.
+    admin_totp: bool = False
+    # Shortest admin password `lutrinh admin create|reset|set-password` accepts. Raise it (14
+    # when TOTP goes back on) before the server holds real data.
+    admin_password_min: int = 6
     # Argon2id cost; tests lower it (the defaults are argon2-cffi's RFC 9106 low-memory profile).
     argon2_time_cost: int = 3
     argon2_memory_kib: int = 65536

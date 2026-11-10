@@ -1,8 +1,9 @@
 """Admin login (D-7 A, page 03 "Đăng nhập quản trị", page 04 §G).
 
-* One account. Password ≥ 14 characters, Argon2id. TOTP (6 digits, 30 s, ±1 step for clock
-  drift) or one of 10 single-use backup codes (10 characters). Password and second factor are
-  checked in one call and the answer never says which one was wrong.
+* One account: username + password (Argon2id, at least ``settings.admin_password_min``
+  characters). While ``settings.admin_totp`` is on (off during the test phase) a TOTP (6 digits,
+  30 s, ±1 step for clock drift) or one of 10 single-use backup codes (10 characters) is needed
+  too. Everything is checked in one call and the answer never says which part was wrong.
 * An accepted TOTP step is never accepted again (replay within its 30 s window).
 * 5 failures within 15 minutes lock the login for 15 minutes and send a mail.
 * Sessions live in the database (logout deletes the row): 12 h absolute, 2 h idle. The cookie
@@ -29,11 +30,10 @@ from lutrinh.config import Settings
 from lutrinh.core.codes import ALPHABET
 from lutrinh.db.models import AdminBackupCode, AdminSession, AdminUser, utcnow
 
-PASSWORD_MIN = 14
 BACKUP_CODES = 10
 BACKUP_CODE_LENGTH = 10
 TOTP_ISSUER = "Lữ Trình"
-USERNAME = "admin"
+USERNAME = "admin"  # default; ``set_password`` may rename the one account
 
 
 class AuthError(Exception):
@@ -76,33 +76,77 @@ class Enrolment:
 def enrol(session: Session, settings: Settings, password: str, *, reset: bool = False) -> Enrolment:
     """Create the admin (or, with ``reset``, replace password, TOTP and backup codes and end
     every session). Caller commits."""
-    if len(password) < PASSWORD_MIN:
-        raise AuthError("weak_password", detail=f"at least {PASSWORD_MIN} characters")
-    admin = session.scalar(select(AdminUser).where(AdminUser.username == USERNAME))
+    _check_password(settings, password)
+    admin = _the_admin(session)
     if admin is not None and not reset:
         raise AuthError("admin_exists")
     if admin is None and reset:
         raise AuthError("no_admin")
     ph = hasher(settings)
+    if admin is None:
+        admin = AdminUser(username=USERNAME, password_hash="", totp_secret="")
+        session.add(admin)
+    enrolment = _new_second_factor(ph, admin)
+    _store_password(ph, admin, password)
+    session.flush()
+    return enrolment
+
+
+def set_password(
+    session: Session, settings: Settings, password: str, *, username: str = USERNAME
+) -> bool:
+    """Set the username and password of the one admin without touching its TOTP secret or
+    backup codes (a new account gets fresh ones it never shows: ``reset`` prints them when TOTP
+    goes back on). Ends every session. Returns True when the account was created. Caller
+    commits."""
+    _check_password(settings, password)
+    if not 1 <= len(username) <= 40:
+        raise AuthError("bad_username", detail="1 to 40 characters")
+    admin = _the_admin(session)
+    created = admin is None
+    ph = hasher(settings)
+    if admin is None:
+        admin = AdminUser(username=username, password_hash="", totp_secret="")
+        session.add(admin)
+        _new_second_factor(ph, admin)
+    admin.username = username
+    _store_password(ph, admin, password)
+    session.flush()
+    return created
+
+
+def _check_password(settings: Settings, password: str) -> None:
+    if len(password) < settings.admin_password_min:
+        raise AuthError(
+            "weak_password", detail=f"at least {settings.admin_password_min} characters"
+        )
+
+
+def _the_admin(session: Session) -> AdminUser | None:
+    return session.scalar(select(AdminUser).order_by(AdminUser.id).limit(1))
+
+
+def _new_second_factor(ph: PasswordHasher, admin: AdminUser) -> Enrolment:
     secret = pyotp.random_base32()
     codes = [
         "".join(secrets.choice(ALPHABET) for _ in range(BACKUP_CODE_LENGTH))
         for _ in range(BACKUP_CODES)
     ]
-    if admin is None:
-        admin = AdminUser(username=USERNAME, password_hash="", totp_secret="")
-        session.add(admin)
-    admin.password_hash = ph.hash(password)
     admin.totp_secret = secret
     admin.last_totp_step = None
+    admin.backup_codes = [AdminBackupCode(code_hash=ph.hash(c)) for c in codes]
+    uri = pyotp.TOTP(secret).provisioning_uri(
+        name=admin.username or USERNAME, issuer_name=TOTP_ISSUER
+    )
+    return Enrolment(secret, uri, [f"{c[:5]}-{c[5:]}" for c in codes])
+
+
+def _store_password(ph: PasswordHasher, admin: AdminUser, password: str) -> None:
+    admin.password_hash = ph.hash(password)
     admin.failed_count = 0
     admin.first_failed_at = None
     admin.locked_until = None
-    admin.backup_codes = [AdminBackupCode(code_hash=ph.hash(c)) for c in codes]
     admin.sessions = []
-    session.flush()
-    uri = pyotp.TOTP(secret).provisioning_uri(name=USERNAME, issuer_name=TOTP_ISSUER)
-    return Enrolment(secret, uri, [f"{c[:5]}-{c[5:]}" for c in codes])
 
 
 def _totp_step(admin: AdminUser, code: str, now: datetime) -> int | None:
@@ -139,15 +183,17 @@ def login(
     session: Session,
     settings: Settings,
     mailer: Mailer,
+    username: str,
     password: str,
-    code: str,
+    code: str = "",
     *,
     now: datetime | None = None,
 ) -> NewSession:
-    """Check password + TOTP (or a backup code) and open a session. Commits on failure too,
-    so the failure counter survives; the caller commits on success."""
+    """Check username + password (+ TOTP or a backup code while ``settings.admin_totp`` is on)
+    and open a session. Commits on failure too, so the failure counter survives; the caller
+    commits on success."""
     now = now or utcnow()
-    admin = session.scalar(select(AdminUser).where(AdminUser.username == USERNAME))
+    admin = session.scalar(select(AdminUser).where(AdminUser.username == username))
     if admin is None:
         raise AuthError("bad_credentials")
     if admin.locked_until is not None and admin.locked_until > now:
@@ -155,9 +201,13 @@ def login(
 
     ph = hasher(settings)
     password_ok = _verify(ph, admin.password_hash, password)
-    step = _totp_step(admin, code.strip(), now)
-    backup = None if step is not None else _backup_code(ph, admin, code)
-    if not password_ok or (step is None and backup is None):
+    step = backup = None
+    second_ok = True
+    if settings.admin_totp:
+        step = _totp_step(admin, code.strip(), now)
+        backup = None if step is not None else _backup_code(ph, admin, code)
+        second_ok = step is not None or backup is not None
+    if not password_ok or not second_ok:
         _fail(session, settings, mailer, admin, now)
         raise AuthError("bad_credentials")
 

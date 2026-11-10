@@ -24,6 +24,7 @@ from lutrinh.db.models import Base
 from lutrinh.services import auth
 
 PASSWORD = "dung-quen-mat-khau-nay"
+USERNAME = "admin"
 BASE_URL = "https://testserver"
 
 
@@ -58,6 +59,14 @@ def admin(tmp_path: Path) -> Iterator[Admin]:
 
 
 @pytest.fixture
+def totp_on(admin: Admin) -> Admin:
+    """Same app with ``LUTRINH_ADMIN_TOTP=on`` (the settings object is shared, so it applies
+    at once)."""
+    admin.settings.admin_totp = True
+    return admin
+
+
+@pytest.fixture
 def anon(admin: Admin) -> Iterator[TestClient]:
     with TestClient(admin.app, base_url=BASE_URL) as client:
         yield client
@@ -67,7 +76,7 @@ def anon(admin: Admin) -> Iterator[TestClient]:
 def client(admin: Admin) -> Iterator[TestClient]:
     """Logged in; sends ``X-CSRF-Token`` on every request."""
     with TestClient(admin.app, base_url=BASE_URL) as c:
-        r = c.post(f"{PREFIX}/session", json={"password": PASSWORD, "code": admin.totp.now()})
+        r = c.post(f"{PREFIX}/session", json={"username": USERNAME, "password": PASSWORD})
         assert r.status_code == 200, r.text
         c.headers["X-CSRF-Token"] = r.json()["csrfToken"]
         yield c

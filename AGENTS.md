@@ -37,8 +37,8 @@ unset LUTRINH_DATABASE_URL
 - `lutrinh/core/` — pure, no DB: `codes.py` (generate/normalise/parse, Luhn mod 30), `canonical_json.py` (RFC 8785), `package.py` (draft → `route.json`, schema + integrity check, `read`), `polyline.py`, `ids.py`.
 - `lutrinh/db/` — `models.py` (routes, drafts, route_versions, version_media, codes, media, jobs; public API: download_tokens, ip_events, ip_locks, alarms, monthly_bytes, daily_counts), `engine.py` (SQLite WAL + foreign keys), `migrations/` (Alembic; `alembic.ini` in `server/`).
 - `lutrinh/core/` also: `rules.py` (publish blockers/warnings, size limits), `gpx.py` (defusedxml reader → draft), `dwell.py` (stays in a track), `backup.py` (app backup → draft), `geo.py`.
-- `lutrinh/services/` — `publishing.py` (`publish_draft`, `preflight`, `publish`, `unpublish`, `republish`), `codes.py` (issue/revoke/reissue/`lookup`), `routes.py` (CRUD, draft If-Match, legs, trash/purge), `uploads.py` + `media.py` + `imports.py` (chunked upload → media/GPX/backup), `auth.py` (Argon2id + TOTP + backup codes, sessions, lockout), `audit.py`, `jobs.py` (enqueue only), `errors.py` (`ServiceError`). Public side: `downloads.py` (tokens, summary, update check, Accept `v=`), `limits.py` (IP rate limits + lock ladder, alarm, bandwidth, daily counts, 14-day purge), `seed.py` (`seed-sample`: spec sample + ffmpeg placeholder media → published route).
-- `lutrinh/api/` — `app.py` (`create_app`; `/openapi.json`; `/admin` serves `admin_dist_dir` or a placeholder), `deps.py` (session cookie `__Host-lt_session`, CSRF), `errors.py` (error envelope), `admin/` (routers under `/admin/api/v1`), `public.py` (`/api/v1`: meta, codes, dl route/media with Range, updates). `lutrinh/cli.py` — `uv run lutrinh admin create|reset` (prints TOTP URI + backup codes), `seed-sample`, `serve [--host --port]`.
+- `lutrinh/services/` — `publishing.py` (`publish_draft`, `preflight`, `publish`, `unpublish`, `republish`), `codes.py` (issue/revoke/reissue/`lookup`), `routes.py` (CRUD, draft If-Match, legs, trash/purge), `uploads.py` + `media.py` + `imports.py` (chunked upload → media/GPX/backup), `auth.py` (Argon2id; TOTP + backup codes only while `LUTRINH_ADMIN_TOTP=on`; sessions, lockout), `audit.py`, `jobs.py` (enqueue only), `errors.py` (`ServiceError`). Public side: `downloads.py` (tokens, summary, update check, Accept `v=`), `limits.py` (IP rate limits + lock ladder, alarm, bandwidth, daily counts, 14-day purge), `seed.py` (`seed-sample`: spec sample + ffmpeg placeholder media → published route).
+- `lutrinh/api/` — `app.py` (`create_app`; `/openapi.json`; `/admin` serves `admin_dist_dir` or a placeholder), `deps.py` (session cookie `__Host-lt_session`, CSRF), `errors.py` (error envelope), `admin/` (routers under `/admin/api/v1`), `public.py` (`/api/v1`: meta, codes, dl route/media with Range, updates). `lutrinh/cli.py` — `uv run lutrinh admin create|reset|set-password` (create/reset print TOTP URI + backup codes; `set-password --username admin --password-stdin` changes only username + password, keeps data and TOTP secret), `seed-sample`, `serve [--host --port]`.
 - `lutrinh/adapters/mail/` — `Mailer` + log-only adapter. `adapters/routing/` — `Router` protocol, `Routers` (Valhalla first, OSRM car-only fallback when Valhalla is unavailable) + `Throttle` (≥ 1 s between calls); `valhalla.py`, `osrm.py` are the only modules that know those APIs; URLs/User-Agent in `config.py`. Later: `adapters/storage/` (page 06 §1).
 - `lutrinh/jobs/` — `worker.py` (`lutrinh worker [--once]` = `python -m lutrinh.jobs.worker`: compare-and-set claim, retry 30 s × 2ⁿ ≤ 10 min up to `jobs.max_attempts`, `PermanentError` = no retry, stale `running` reclaimed after 60 min, nightly `purge.iplog` + trash sweep), `media.py` (Pillow: upright, ≤ 2560 px, JPEG 85, no EXIF/GPS/XMP, `.w640.jpg`; ffprobe/ffmpeg: > 60 s refused, H.264 short side ≤ 720, ≤ 30 fps, AAC, faststart, metadata stripped, no poster), `legs.py` (R36: car fallback → `usedProfile: car`, 500 m / 5× guard → `too_far`, ~10 m simplify, CAS on `drafts.revision`), `purge.py` (media rows/files no draft/version uses; 30-day trash sweep; IPs/tokens).
 - `tests/spec/` read the `spec/` files; `tests/core/` test the modules; `tests/admin/` drive the API with `TestClient`; `tests/public/` the public API and CLI. `scripts/make_spec_sample.py` regenerates the sample package.
@@ -51,7 +51,7 @@ Run from `server/` after Setup. The public API contract and the Mate decisions b
 ```sh
 export LUTRINH_DATA_DIR=$LUTRINH_TMP/local && mkdir -p $LUTRINH_DATA_DIR/db   # db/ is not created for you
 uv run alembic upgrade head
-uv run lutrinh admin create            # once; prints the TOTP URI + backup codes (log in at /admin)
+echo 123456 | uv run lutrinh admin set-password --username admin --password-stdin   # test phase: log in at /admin as admin / 123456, no TOTP
 uv run lutrinh seed-sample             # prints "Mã: XXXX-XXXX"; each run adds a new published route
 uv run lutrinh serve                   # 127.0.0.1:8000; Android emulator: --host 0.0.0.0 → http://10.0.2.2:8000
 ```
@@ -78,6 +78,15 @@ uv run lutrinh worker --once           # run what is due, then exit
 Rate limits apply to localhost too (10 failed lookups/hour → 429 lock); delete
 `$LUTRINH_DATA_DIR` and start again to reset.
 
+### Admin login (test phase)
+
+Every environment logs in with username + password (`admin` / `123456`); no TOTP. `LUTRINH_ADMIN_TOTP`
+(`off` default, `on` = TOTP or a backup code again, using the secret `admin create|reset` made) and
+`LUTRINH_ADMIN_PASSWORD_MIN` (default 6; use 14 for real use) live in `config.py`. `GET /admin/api/v1/session/options`
+(public) → `{totpRequired}` tells the login form whether to show the code field. To re-enable TOTP:
+set `LUTRINH_ADMIN_TOTP=on`, run `lutrinh admin reset` (prints the new TOTP URI + codes). On the VM see
+`deploy/README.md` §4. Tests: `totp_on` fixture in `tests/admin/conftest.py`.
+
 ## Admin web (admin/)
 
 Node 24; npm cache under `/Volumes/wdblack/tmp` like everything else. The host needs no Node:
@@ -94,8 +103,8 @@ npm run build && env -u PLAYWRIGHT_BROWSERS_PATH npx playwright test   # e2e, be
 ```
 
 The e2e (`e2e/publish-flow.spec.ts`) starts its own server (`e2e/server.mjs`, port 8123, fresh
-data dir under `/Volumes/wdblack/tmp/lutrinh-admin-web/e2e/`, admin created with
-`--password-stdin`, TOTP computed by `e2e/totp.ts`), logs in, imports `e2e/fixtures/*.gpx`,
+data dir under `/Volumes/wdblack/tmp/lutrinh-admin-web/e2e/`, admin set with
+`lutrinh admin set-password` = admin / 123456, no TOTP), logs in, imports `e2e/fixtures/*.gpx`,
 publishes, and checks `GET /api/v1/codes/<code>` with curl; Playwright stops the server after.
 Screenshots: `/Volumes/wdblack/tmp/lutrinh-admin-web/screens/`. No worker process: the test runs
 the due jobs once with `e2e/process_jobs.py` (media for real, routers answer "unavailable", so no
