@@ -1,4 +1,4 @@
-"""Background jobs: the API only enqueues rows; ``lutrinh.jobs.worker`` (later) runs them.
+"""Background jobs: the API only enqueues rows; ``lutrinh.jobs.worker`` runs them.
 
 Kinds (page 06 §3): ``media.image``, ``media.video``, ``legs.compute``, ``purge.trash``,
 ``purge.iplog``.

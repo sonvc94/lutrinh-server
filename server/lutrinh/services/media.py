@@ -1,9 +1,10 @@
 """Photos and videos (page 03 ``/media``, page 04 "Ảnh/video").
 
 An upload creates a media row (``uploading``); completing it queues ``media.image`` or
-``media.video`` (status ``processing``). The worker (a later task) strips EXIF/GPS, resizes or
-transcodes, stores ``media/ab/cd/<sha256>`` and marks the row ``ready``. A media row used by a
-draft cannot be removed; published versions keep their files by sha256 (``version_media``).
+``media.video`` (status ``processing``). The worker (``lutrinh.jobs.media``) strips EXIF/GPS,
+resizes or transcodes, stores ``media/ab/cd/<sha256>`` and marks the row ``ready``. A media row
+used by a draft cannot be removed; published versions keep their files by sha256
+(``version_media``).
 """
 
 from __future__ import annotations

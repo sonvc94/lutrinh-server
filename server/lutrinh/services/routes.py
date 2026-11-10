@@ -164,6 +164,16 @@ def _keys(body: dict[str, Any]) -> dict[str, tuple[Any, ...]]:
     return out
 
 
+def leg_inputs(body: dict[str, Any], to_stop: str) -> tuple[Any, ...] | None:
+    """What the road leg into ``to_stop`` depends on (``legs.compute``); None = no road leg.
+
+    ``(previous stop id, its lat, lng, this stop's lat, lng, profile)``."""
+    for i, stop in enumerate(body.get("stops") or []):
+        if stop.get("id") == to_stop:
+            return _leg_key(body, i)
+    return None
+
+
 def missing_legs(body: dict[str, Any]) -> list[str]:
     """Road stops that have no leg."""
     have = {leg.get("to") for leg in body.get("legs") or []}

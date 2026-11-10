@@ -39,7 +39,8 @@ unset LUTRINH_DATABASE_URL
 - `lutrinh/core/` also: `rules.py` (publish blockers/warnings, size limits), `gpx.py` (defusedxml reader → draft), `dwell.py` (stays in a track), `backup.py` (app backup → draft), `geo.py`.
 - `lutrinh/services/` — `publishing.py` (`publish_draft`, `preflight`, `publish`, `unpublish`, `republish`), `codes.py` (issue/revoke/reissue/`lookup`), `routes.py` (CRUD, draft If-Match, legs, trash/purge), `uploads.py` + `media.py` + `imports.py` (chunked upload → media/GPX/backup), `auth.py` (Argon2id + TOTP + backup codes, sessions, lockout), `audit.py`, `jobs.py` (enqueue only), `errors.py` (`ServiceError`). Public side: `downloads.py` (tokens, summary, update check, Accept `v=`), `limits.py` (IP rate limits + lock ladder, alarm, bandwidth, daily counts, 14-day purge), `seed.py` (`seed-sample`: spec sample + ffmpeg placeholder media → published route).
 - `lutrinh/api/` — `app.py` (`create_app`; `/openapi.json`; `/admin` serves `admin_dist_dir` or a placeholder), `deps.py` (session cookie `__Host-lt_session`, CSRF), `errors.py` (error envelope), `admin/` (routers under `/admin/api/v1`), `public.py` (`/api/v1`: meta, codes, dl route/media with Range, updates). `lutrinh/cli.py` — `uv run lutrinh admin create|reset` (prints TOTP URI + backup codes), `seed-sample`, `serve [--host --port]`.
-- `lutrinh/adapters/mail/` — `Mailer` + log-only adapter. Later tasks: `lutrinh/jobs/worker.py` (runs the `jobs` rows), `adapters/{routing,storage}/` (page 06 §1).
+- `lutrinh/adapters/mail/` — `Mailer` + log-only adapter. `adapters/routing/` — `Router` protocol, `Routers` (Valhalla first, OSRM car-only fallback when Valhalla is unavailable) + `Throttle` (≥ 1 s between calls); `valhalla.py`, `osrm.py` are the only modules that know those APIs; URLs/User-Agent in `config.py`. Later: `adapters/storage/` (page 06 §1).
+- `lutrinh/jobs/` — `worker.py` (`lutrinh worker [--once]` = `python -m lutrinh.jobs.worker`: compare-and-set claim, retry 30 s × 2ⁿ ≤ 10 min up to `jobs.max_attempts`, `PermanentError` = no retry, stale `running` reclaimed after 60 min, nightly `purge.iplog` + trash sweep), `media.py` (Pillow: upright, ≤ 2560 px, JPEG 85, no EXIF/GPS/XMP, `.w640.jpg`; ffprobe/ffmpeg: > 60 s refused, H.264 short side ≤ 720, ≤ 30 fps, AAC, faststart, metadata stripped, no poster), `legs.py` (R36: car fallback → `usedProfile: car`, 500 m / 5× guard → `too_far`, ~10 m simplify, CAS on `drafts.revision`), `purge.py` (media rows/files no draft/version uses; 30-day trash sweep; IPs/tokens).
 - `tests/spec/` read the `spec/` files; `tests/core/` test the modules; `tests/admin/` drive the API with `TestClient`; `tests/public/` the public API and CLI. `scripts/make_spec_sample.py` regenerates the sample package.
 
 ## Chạy thử trên máy (localhost)
@@ -65,6 +66,15 @@ curl -s -X POST -H 'Content-Type: application/json' localhost:8000/api/v1/update
   -d '[{"code":"XXXX-XXXX","routeId":"<routeId>","version":1}]'
 ```
 
+The worker is a second process on the same `LUTRINH_DATA_DIR` (photos, videos, road legs, nightly
+purges); without it uploads stay `processing` and legs are never computed. It needs `ffmpeg` and
+`ffprobe` on PATH and calls the FOSSGIS routers (Valhalla, OSRM) for legs.
+
+```sh
+uv run lutrinh worker                  # second terminal, same exports; Ctrl-C stops after the current job
+uv run lutrinh worker --once           # run what is due, then exit
+```
+
 Rate limits apply to localhost too (10 failed lookups/hour → 429 lock); delete
 `$LUTRINH_DATA_DIR` and start again to reset.
 
@@ -80,4 +90,6 @@ Rate limits apply to localhost too (10 failed lookups/hour → 429 lock); delete
 - Admin tests use `base_url="https://testserver"`: the `__Host-` cookie is Secure and httpx drops it over http. Argon2 cost is lowered via settings in tests only.
 - FastAPI ≥0.16x wraps included routers in `_IncludedRouter` inside `app.routes`; the 401 walker in `tests/admin/test_auth.py` expands them via `effective_route_contexts()` (private API — recheck on upgrades).
 - A purged route's codes move to `retired_codes` so a code is never issued twice. Zip package export/import is deferred (Mate decision 1C).
+- Worker tests (`tests/jobs/`) use `FakeRouter` (no network) and a `Clock` an hour ahead of real time, because jobs queued by services get `run_at = utcnow()`. `LUTRINH_LIVE_ROUTER=1 uv run pytest tests/jobs -k live` makes one real call to each FOSSGIS router.
+- Job handlers open their own short sessions; never hold a transaction across Pillow/ffmpeg/router calls (the API writes the same SQLite file). Draft writes from the worker are compare-and-set on `drafts.revision` and bump it, so an admin holding an old ETag gets 412 after a leg lands.
 - Public tests pass `TestClient(app, client=(ip, port))` to vary the IP, and move time through `app.state.clock` (the routers read it; default `utcnow`). Tests mutate the `Settings` object in place to change limits.

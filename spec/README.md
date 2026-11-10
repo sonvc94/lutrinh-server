@@ -124,5 +124,5 @@ Our reading of the accepted recommendations:
 8. Files on disk: `media/ab/cd/<sha256>.jpg|.mp4`, preview `<sha256>.w640.jpg`. With
    `LUTRINH_MEDIA_ACCEL=true` the API answers `X-Accel-Redirect: /ab/cd/<sha256>.<ext>` (relative
    to `media/`, page 06 Caddyfile); otherwise it sends the file (Range included).
-9. IP rows older than 14 days are deleted by the API as it writes (no worker yet);
+9. IP rows older than 14 days are deleted by the API as it writes and nightly by the worker (`purge.iplog`);
    `daily_counts` kinds: `lookup`, `bad_lookup`, `download` (= `route.json` served).

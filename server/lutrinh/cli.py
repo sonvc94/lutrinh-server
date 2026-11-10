@@ -11,6 +11,8 @@ For trying the server on one machine (AGENTS.md "Chạy thử trên máy"):
 * ``lutrinh serve [--host 127.0.0.1] [--port 8000]``: the API with Uvicorn, one process (the
   rate-limit counters are in SQLite, page 06 §2). ``--host 0.0.0.0`` for the LAN / the Android
   emulator (``http://10.0.2.2:8000``).
+* ``lutrinh worker [--once]``: the job worker (``lutrinh.jobs.worker``), a second process next
+  to ``serve`` on the same data directory: photos, videos, road legs, nightly purges.
 * ``lutrinh seed-sample``: publishes ``spec/samples/ha-giang-4n`` as a route and prints its code
   (needs ffmpeg for the placeholder media, ``services.seed``).
 """
@@ -96,6 +98,12 @@ def _serve(args: argparse.Namespace) -> int:
     return 0
 
 
+def _worker(args: argparse.Namespace) -> int:
+    from lutrinh.jobs import worker
+
+    return worker.main(["--once"] if args.once else [])
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="lutrinh")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -110,6 +118,9 @@ def main(argv: list[str] | None = None) -> int:
     serve.add_argument("--host", default="127.0.0.1")
     serve.add_argument("--port", type=int, default=8000)
     serve.set_defaults(run=_serve)
+    work = sub.add_parser("worker", help="run the background jobs (media, legs, purges)")
+    work.add_argument("--once", action="store_true", help="run the due jobs, then exit")
+    work.set_defaults(run=_worker)
     args = parser.parse_args(argv)
     code: int = args.run(args)
     return code

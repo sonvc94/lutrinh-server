@@ -68,6 +68,40 @@ class Settings(BaseSettings):
     # Behind Caddy/Nginx: answer media with X-Accel-Redirect (page 06 §4) instead of the file.
     media_accel: bool = False
 
+    # Worker (page 06 §3, D-20 A): one process runs the `jobs` rows one at a time.
+    worker_poll_seconds: float = 2
+    # Retry after a failure: base × 2^(attempt-1), at most the cap; `jobs.max_attempts` tries.
+    job_backoff_seconds: float = 30
+    job_backoff_max_seconds: float = 600
+    # A job still `running` after this long belongs to a worker that died; it is claimed again.
+    job_stale_minutes: float = 60
+    # Nightly jobs (purge.iplog, the 30-day trash sweep) are queued after this local hour.
+    nightly_hour: int = 3
+    trash_days: float = 30
+    # Photos (page 03 "Kích thước", R11): ≤ 2560 px, JPEG ~85 %, no EXIF/GPS; 640 px preview.
+    image_max_px: int = 2560
+    image_quality: int = 85
+    thumb_width: int = 640
+    # Videos (R29, page 03): ≤ 60 s, re-encoded to 720p H.264 + AAC, +faststart.
+    ffmpeg: str = "ffmpeg"
+    ffprobe: str = "ffprobe"
+    video_max_seconds: float = 60
+    video_short_side: int = 720
+    video_max_fps: int = 30
+    video_crf: int = 23
+    video_preset: str = "medium"
+    video_timeout_seconds: float = 900
+    # Routing (R36 via adapters/routing): the router addresses live here and nowhere else.
+    valhalla_url: str = "https://valhalla1.openstreetmap.de/route"
+    osrm_car_url: str = "https://routing.openstreetmap.de/routed-car/route/v1/driving"
+    router_user_agent: str = "LuTrinh-Server/0.1 (route server; httpx)"
+    router_timeout_seconds: float = 30
+    router_min_interval_seconds: float = 1.0
+    # Off-road guard (R36): a stop > 500 m from the road line, or road > 5× straight → too_far.
+    offroad_max_m: float = 500
+    offroad_max_ratio: float = 5
+    leg_simplify_m: float = 10
+
     @property
     def db_url(self) -> str:
         if self.database_url:
