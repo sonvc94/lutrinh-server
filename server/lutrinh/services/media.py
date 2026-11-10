@@ -9,6 +9,7 @@ draft cannot be removed; published versions keep their files by sha256 (``versio
 from __future__ import annotations
 
 from datetime import datetime
+from pathlib import Path
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -21,6 +22,33 @@ from lutrinh.services.errors import ServiceError, not_found
 
 _PHOTO_EXT = {".jpg", ".jpeg", ".png", ".heic", ".heif", ".webp"}
 _VIDEO_EXT = {".mp4", ".mov", ".m4v", ".3gp", ".webm"}
+# Processed files on disk (page 06 §4): photos are JPEG, videos H.264 MP4.
+FILE_EXT = {"photo": ".jpg", "video": ".mp4"}
+CONTENT_TYPE = {".jpg": "image/jpeg", ".mp4": "video/mp4"}
+THUMB_SUFFIX = ".w640.jpg"
+
+
+def relative_path(sha256: str, ext: str) -> str:
+    """``ab/cd/<sha256><ext>`` under ``media/`` (two directory levels, page 06 §4)."""
+    return f"{sha256[:2]}/{sha256[2:4]}/{sha256}{ext}"
+
+
+def file_path(settings: Settings, sha256: str, kind: str) -> Path:
+    return settings.media_dir / relative_path(sha256, FILE_EXT[kind])
+
+
+def thumb_path(settings: Settings, sha256: str) -> Path:
+    """The ≤ 640 px preview of a photo (made by the worker, or by ``seed-sample``)."""
+    return settings.media_dir / relative_path(sha256, THUMB_SUFFIX)
+
+
+def find_file(settings: Settings, sha256: str) -> Path | None:
+    """The processed file of ``sha256`` (photo or video), or None when it is not on disk."""
+    for ext in FILE_EXT.values():
+        path = settings.media_dir / relative_path(sha256, ext)
+        if path.is_file():
+            return path
+    return None
 
 
 def media_type(filename: str, content_type: str | None) -> str:

@@ -43,6 +43,31 @@ class Settings(BaseSettings):
     # Publish warning "long leg within one day" (Mate decision 6A).
     long_leg_warn_km: float = 150
 
+    # Public API (page 03, Mate decisions server-public-api 2–9).
+    token_hours: float = 2
+    lookups_per_hour: int = 30
+    bad_lookups_per_hour: int = 10
+    # Lock ladder after too many failed lookups; resets after 24 h without a lock.
+    lock_ladder_hours: list[float] = [1, 4, 24]
+    lock_ladder_reset_hours: float = 24
+    # System-wide: this many failed lookups in an hour → mail + tightened per-IP limit for 24 h.
+    alarm_bad_lookups_per_hour: int = 500
+    alarm_bad_lookups_per_ip: int = 3
+    alarm_hours: float = 24
+    route_downloads_per_code_hour: int = 10
+    media_requests_per_file: int = 3
+    bandwidth_month_bytes: int = 100 * 1000**3
+    bandwidth_warn_ratio: float = 0.7
+    iplog_days: float = 14
+    overview_tolerance_m: float = 200
+    # Switch for "bảo trì": /api/v1/meta says so, every other public route answers 503.
+    maintenance: bool = False
+    maintenance_message: str | None = None
+    min_app_android: str = "0.0.0"
+    min_app_ios: str = "0.0.0"
+    # Behind Caddy/Nginx: answer media with X-Accel-Redirect (page 06 §4) instead of the file.
+    media_accel: bool = False
+
     @property
     def db_url(self) -> str:
         if self.database_url:

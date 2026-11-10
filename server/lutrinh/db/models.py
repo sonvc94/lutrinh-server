@@ -17,6 +17,10 @@
 * ``uploads``: chunked uploads in progress (files under ``uploads/<id>/``).
 * ``imports``: GPX / app-backup imports, their preview and the route they created.
 * ``daily_counts``: per-day lookup/download counters (D-14 A), written by the public API.
+* ``download_tokens``: 2-hour download tokens of the public API (one code + one version).
+* ``ip_events`` / ``ip_locks``: per-IP rate-limit counters and lockouts (kept 14 days, D-14 A).
+* ``alarms``: system-wide alarms (too many failed lookups → tightened limits for 24 h).
+* ``monthly_bytes``: bytes handed out per month (bandwidth cap, page 03).
 """
 
 from __future__ import annotations
@@ -356,6 +360,78 @@ class DailyCount(Base):
     route_id: Mapped[str] = mapped_column(String(40), default="")
     kind: Mapped[str] = mapped_column(String(16))
     count: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class DownloadToken(Base):
+    """A download token (page 03): random, 2 hours, tied to one code + one version.
+
+    ``media_used`` counts media requests against ``media_limit`` (files × 3, page 03 table).
+    """
+
+    __tablename__ = "download_tokens"
+
+    token: Mapped[str] = mapped_column(String(64), primary_key=True)
+    code: Mapped[str] = mapped_column(String(8))
+    route_id: Mapped[str] = mapped_column(ForeignKey("routes.id", ondelete="CASCADE"), index=True)
+    version: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    expires_at: Mapped[datetime] = mapped_column(UTCDateTime, index=True)
+    media_limit: Mapped[int] = mapped_column(Integer)
+    media_used: Mapped[int] = mapped_column(Integer, default=0)
+
+    route: Mapped[Route] = relationship()
+
+
+class IpEvent(Base):
+    """Public API requests counted per IP (page 03 limits, D-14 A); deleted after 14 days.
+
+    ``kind``: ``lookup`` (every code lookup), ``bad_lookup`` (400/404 lookups), ``route``
+    (route.json served; ``key`` = the code).
+    """
+
+    __tablename__ = "ip_events"
+    __table_args__ = (
+        Index(None, "ip", "kind", "at"),
+        Index(None, "kind", "at"),
+        CheckConstraint("kind IN ('lookup', 'bad_lookup', 'route')", name="kind"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    at: Mapped[datetime] = mapped_column(UTCDateTime, index=True)
+    ip: Mapped[str] = mapped_column(String(64))
+    kind: Mapped[str] = mapped_column(String(16))
+    key: Mapped[str | None] = mapped_column(String(64))
+
+
+class IpLock(Base):
+    """An IP locked out of code lookups; ``level`` 1/2/3 = 1 h / 4 h / 24 h (page 03)."""
+
+    __tablename__ = "ip_locks"
+
+    ip: Mapped[str] = mapped_column(String(64), primary_key=True)
+    level: Mapped[int] = mapped_column(Integer)
+    locked_at: Mapped[datetime] = mapped_column(UTCDateTime)
+    locked_until: Mapped[datetime] = mapped_column(UTCDateTime, index=True)
+
+
+class Alarm(Base):
+    """A system-wide alarm in force until ``until`` (``bad_lookups``: tightened limits)."""
+
+    __tablename__ = "alarms"
+
+    name: Mapped[str] = mapped_column(String(32), primary_key=True)
+    raised_at: Mapped[datetime] = mapped_column(UTCDateTime)
+    until: Mapped[datetime] = mapped_column(UTCDateTime)
+
+
+class MonthlyBytes(Base):
+    """Bytes the public API handed out per UTC month (``yyyy-mm``), for the bandwidth cap."""
+
+    __tablename__ = "monthly_bytes"
+
+    month: Mapped[str] = mapped_column(String(7), primary_key=True)
+    bytes: Mapped[int] = mapped_column(Integer, default=0)
+    warned_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
 
 
 class ImmutableVersionError(RuntimeError):

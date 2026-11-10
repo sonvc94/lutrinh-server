@@ -79,3 +79,50 @@ Then: length ≠ 8 → `bad_format`/`length`; first character outside the alphab
 character must be the Luhn mod 30 check of the first 7 (rightmost payload character doubled,
 doubled values folded as `v // 30 + v % 30`) → else `bad_check`. Every single substitution is
 caught; a few adjacent swaps are not (`2`↔`Z`, see `adjacentTranspositions`).
+
+## Public API `/api/v1` (server ↔ app)
+
+Page 03 of the design, as built in `server/lutrinh/api/public.py` (tests: `server/tests/public/`).
+JSON; errors are `{"error": {"code", "retryAfterS", "detail"?}}` with the codes of page 03
+("Bảng lỗi"), `Retry-After` on 429.
+
+| Request | Answer |
+| --- | --- |
+| `GET /api/v1/codes/{code}` | summary: `code` (`XXXX-XXXX`), `routeId`, `version`, `formatVersion`, `title`, `description`, `days`, `stops`, `distanceM` (sum of leg `distanceM`), `photos`, `videos`, `bytes` = `size.media`, `files` = `size.files`, `region`, `overview` (polyline6, ok-leg paths else stop points, Douglas-Peucker ~200 m), `cover` (`/api/v1/dl/<token>/media/<sha>?w=640` or null), `downloadToken` (`tk_…`), `tokenExpiresAt` (2 h) |
+| `GET /api/v1/dl/{token}/route` | the previewed version's `route.json` bytes, `ETag: "<sha256>"` (`If-None-Match` → 304), `Content-Type: application/vnd.lutrinh.route+json;v=1` |
+| `GET /api/v1/dl/{token}/media/{sha256}` | one file of that version; `Range` → 206; `Cache-Control: public, max-age=31536000, immutable`; `?w=640` → the 640 px preview when the server has one, else the full photo |
+| `POST /api/v1/updates` | body `[{code, routeId, version}]` (≤ 50, else 400 `too_many`) → `{"results": [{code, routeId, status, …}]}` in request order, `code` echoed as sent; `status` `current` (+`version`) \| `newer` (+`version`, `publishedAt`, `note`, `changes: {stopsAdded: [ids], stopsRemoved: [ids], stopsEdited: n, mediaAdded: n, bytes: n}`, bytes = media not in the app's version) \| `unpublished` \| `revoked` \| `expired` |
+| `GET /api/v1/meta` | `{"formatVersions": [1], "minAppVersion": {"android", "ios"}, "maintenance": bool, "message": str\|null}` |
+
+### Decisions (Mate, during server-public-api)
+
+Mate's answer, verbatim: "accept every recommendation in /tmp/server-public-api-decisions.md: 1B
+(ffmpeg-generated placeholder JPEG/MP4, normal publish, spec/ unchanged), 2–9 as written."
+
+Our reading of the accepted recommendations:
+
+1. `lutrinh seed-sample` turns this sample's text, stops and legs into a new route, generates
+   placeholder media with ffmpeg and publishes it normally: its `route.json` has its own hashes
+   and sizes (the sample's media hashes are of placeholder strings). This directory is unchanged.
+2. A failed lookup is a 400 (`bad_format`/`bad_check`) or 404; a 410 counts only as a lookup.
+   30 lookups / sliding hour / IP → 429 until the oldest leaves the hour. The 10th failure in an
+   hour locks the IP (every lookup 429): 1 h, then 4 h, then 24 h; the ladder resets after 24 h
+   without a lock. 500 failures / hour system-wide → mail + 3 failures / hour / IP for 24 h.
+3. Tokens: `tk_` + 32 random bytes (urlsafe), stored in SQLite. Unknown or expired → 401
+   `token_expired`; the code revoked/expired or the route unpublished/trashed since → that 410;
+   a sha256 not in the token's version → 404 `not_found`.
+4. `route.json` 10 / hour / code / IP; media requests per token ≤ files × 3 (cover included);
+   monthly bandwidth = bytes the API hands out (whole file or the Range length), cap 100 GB by
+   default, mail at 70 %, 503 `quota` at the cap. All counters in SQLite.
+5. Maintenance is a setting for now (`LUTRINH_MAINTENANCE`, `LUTRINH_MAINTENANCE_MESSAGE`);
+   `/meta` stays 200 and says so, every other `/api/v1` route answers 503 `maintenance`.
+6. Shapes as in the table above (they match the app's `LuTrinhServerCatalog`); an unknown or
+   malformed code, or a `routeId` that does not match the code, → `unpublished`. `/updates` has
+   no rate limit beyond ≤ 50 links.
+7. `Accept: application/vnd.lutrinh.route+json;v=N` with N below the package's `formatVersion` →
+   406 `format_unsupported` on `/codes` and `/dl/…/route`; no such Accept → served.
+8. Files on disk: `media/ab/cd/<sha256>.jpg|.mp4`, preview `<sha256>.w640.jpg`. With
+   `LUTRINH_MEDIA_ACCEL=true` the API answers `X-Accel-Redirect: /ab/cd/<sha256>.<ext>` (relative
+   to `media/`, page 06 Caddyfile); otherwise it sends the file (Range included).
+9. IP rows older than 14 days are deleted by the API as it writes (no worker yet);
+   `daily_counts` kinds: `lookup`, `bad_lookup`, `download` (= `route.json` served).

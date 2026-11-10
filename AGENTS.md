@@ -35,12 +35,38 @@ unset LUTRINH_DATABASE_URL
 
 - `lutrinh/config.py` — `LUTRINH_DATA_DIR` (default `/var/lib/lutrinh`), `LUTRINH_DATABASE_URL`, `LUTRINH_SPEC_DIR` (default repo `spec/`).
 - `lutrinh/core/` — pure, no DB: `codes.py` (generate/normalise/parse, Luhn mod 30), `canonical_json.py` (RFC 8785), `package.py` (draft → `route.json`, schema + integrity check, `read`), `polyline.py`, `ids.py`.
-- `lutrinh/db/` — `models.py` (routes, drafts, route_versions, version_media, codes, media, jobs), `engine.py` (SQLite WAL + foreign keys), `migrations/` (Alembic; `alembic.ini` in `server/`).
+- `lutrinh/db/` — `models.py` (routes, drafts, route_versions, version_media, codes, media, jobs; public API: download_tokens, ip_events, ip_locks, alarms, monthly_bytes, daily_counts), `engine.py` (SQLite WAL + foreign keys), `migrations/` (Alembic; `alembic.ini` in `server/`).
 - `lutrinh/core/` also: `rules.py` (publish blockers/warnings, size limits), `gpx.py` (defusedxml reader → draft), `dwell.py` (stays in a track), `backup.py` (app backup → draft), `geo.py`.
-- `lutrinh/services/` — `publishing.py` (`publish_draft`, `preflight`, `publish`, `unpublish`, `republish`), `codes.py` (issue/revoke/reissue/`lookup`), `routes.py` (CRUD, draft If-Match, legs, trash/purge), `uploads.py` + `media.py` + `imports.py` (chunked upload → media/GPX/backup), `auth.py` (Argon2id + TOTP + backup codes, sessions, lockout), `audit.py`, `jobs.py` (enqueue only), `errors.py` (`ServiceError`).
-- `lutrinh/api/` — `app.py` (`create_app`; `/openapi.json`; `/admin` serves `admin_dist_dir` or a placeholder), `deps.py` (session cookie `__Host-lt_session`, CSRF), `errors.py` (error envelope), `admin/` (routers under `/admin/api/v1`). `lutrinh/cli.py` — `uv run lutrinh admin create|reset` (prints TOTP URI + backup codes).
-- `lutrinh/adapters/mail/` — `Mailer` + log-only adapter. Later tasks: `lutrinh/api/public.py`, `lutrinh/jobs/worker.py` (runs the `jobs` rows), `adapters/{routing,storage}/` (page 06 §1).
-- `tests/spec/` read the `spec/` files; `tests/core/` test the modules; `tests/admin/` drive the API with `TestClient`. `scripts/make_spec_sample.py` regenerates the sample package.
+- `lutrinh/services/` — `publishing.py` (`publish_draft`, `preflight`, `publish`, `unpublish`, `republish`), `codes.py` (issue/revoke/reissue/`lookup`), `routes.py` (CRUD, draft If-Match, legs, trash/purge), `uploads.py` + `media.py` + `imports.py` (chunked upload → media/GPX/backup), `auth.py` (Argon2id + TOTP + backup codes, sessions, lockout), `audit.py`, `jobs.py` (enqueue only), `errors.py` (`ServiceError`). Public side: `downloads.py` (tokens, summary, update check, Accept `v=`), `limits.py` (IP rate limits + lock ladder, alarm, bandwidth, daily counts, 14-day purge), `seed.py` (`seed-sample`: spec sample + ffmpeg placeholder media → published route).
+- `lutrinh/api/` — `app.py` (`create_app`; `/openapi.json`; `/admin` serves `admin_dist_dir` or a placeholder), `deps.py` (session cookie `__Host-lt_session`, CSRF), `errors.py` (error envelope), `admin/` (routers under `/admin/api/v1`), `public.py` (`/api/v1`: meta, codes, dl route/media with Range, updates). `lutrinh/cli.py` — `uv run lutrinh admin create|reset` (prints TOTP URI + backup codes), `seed-sample`, `serve [--host --port]`.
+- `lutrinh/adapters/mail/` — `Mailer` + log-only adapter. Later tasks: `lutrinh/jobs/worker.py` (runs the `jobs` rows), `adapters/{routing,storage}/` (page 06 §1).
+- `tests/spec/` read the `spec/` files; `tests/core/` test the modules; `tests/admin/` drive the API with `TestClient`; `tests/public/` the public API and CLI. `scripts/make_spec_sample.py` regenerates the sample package.
+
+## Chạy thử trên máy (localhost)
+
+Run from `server/` after Setup. The public API contract and the Mate decisions behind it are in
+`spec/README.md` "Public API `/api/v1`". `seed-sample` needs `ffmpeg` on PATH (placeholder media).
+
+```sh
+export LUTRINH_DATA_DIR=$LUTRINH_TMP/local && mkdir -p $LUTRINH_DATA_DIR/db   # db/ is not created for you
+uv run alembic upgrade head
+uv run lutrinh admin create            # once; prints the TOTP URI + backup codes (admin UI not built yet)
+uv run lutrinh seed-sample             # prints "Mã: XXXX-XXXX"; each run adds a new published route
+uv run lutrinh serve                   # 127.0.0.1:8000; Android emulator: --host 0.0.0.0 → http://10.0.2.2:8000
+```
+
+```sh
+A='Accept: application/vnd.lutrinh.route+json;v=1'
+curl -s localhost:8000/api/v1/meta
+curl -s -H "$A" localhost:8000/api/v1/codes/XXXX-XXXX          # → summary + "downloadToken" (2 h)
+curl -s -H "$A" localhost:8000/api/v1/dl/<token>/route -o route.json
+curl -s -H 'Range: bytes=0-99' localhost:8000/api/v1/dl/<token>/media/<sha256> -o part  # 206
+curl -s -X POST -H 'Content-Type: application/json' localhost:8000/api/v1/updates \
+  -d '[{"code":"XXXX-XXXX","routeId":"<routeId>","version":1}]'
+```
+
+Rate limits apply to localhost too (10 failed lookups/hour → 429 lock); delete
+`$LUTRINH_DATA_DIR` and start again to reset.
 
 ## Rules and traps
 
@@ -54,3 +80,4 @@ unset LUTRINH_DATABASE_URL
 - Admin tests use `base_url="https://testserver"`: the `__Host-` cookie is Secure and httpx drops it over http. Argon2 cost is lowered via settings in tests only.
 - FastAPI ≥0.16x wraps included routers in `_IncludedRouter` inside `app.routes`; the 401 walker in `tests/admin/test_auth.py` expands them via `effective_route_contexts()` (private API — recheck on upgrades).
 - A purged route's codes move to `retired_codes` so a code is never issued twice. Zip package export/import is deferred (Mate decision 1C).
+- Public tests pass `TestClient(app, client=(ip, port))` to vary the IP, and move time through `app.state.clock` (the routers read it; default `utcnow`). Tests mutate the `Settings` object in place to change limits.

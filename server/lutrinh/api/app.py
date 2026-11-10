@@ -3,7 +3,8 @@
 ``/admin`` serves the built React app (``admin/dist``, setting ``admin_dist_dir``; a later
 task) with ``index.html`` for every client-side path; until it is built a placeholder page is
 served. ``/openapi.json`` is the contract the React client is generated from. The public API
-(``/api/v1``) is a later task.
+for the app is under ``/api/v1`` (``api.public``). ``app.state.clock`` is the time the public
+API counts with (tests replace it).
 """
 
 from __future__ import annotations
@@ -15,10 +16,11 @@ from fastapi.responses import FileResponse, HTMLResponse, Response
 from sqlalchemy import Engine
 
 from lutrinh.adapters.mail import LogMailer, Mailer
-from lutrinh.api import errors
+from lutrinh.api import errors, public
 from lutrinh.api.admin import PREFIX, build_router
 from lutrinh.config import Settings, get_settings
 from lutrinh.db.engine import make_engine, make_sessionmaker
+from lutrinh.db.models import utcnow
 from lutrinh.services.errors import ServiceError
 
 PLACEHOLDER = """<!doctype html>
@@ -61,7 +63,9 @@ def create_app(
     app.state.engine = engine
     app.state.sessionmaker = make_sessionmaker(engine)
     app.state.mailer = mailer or LogMailer()
+    app.state.clock = utcnow
     errors.install(app)
+    app.include_router(public.router)
     app.include_router(build_router())
 
     @app.get("/admin", include_in_schema=False)
