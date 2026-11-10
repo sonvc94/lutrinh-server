@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="lutrinh-e2e" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata><name>Ba điểm quanh Hồ Gươm</name></metadata>
+  <wpt lat="21.028511" lon="105.852180"><name>Tháp Rùa</name><desc>Điểm xuất phát</desc><time>2026-11-01T01:00:00Z</time></wpt>
+  <wpt lat="21.030653" lon="105.852448"><name>Đền Ngọc Sơn</name><time>2026-11-01T02:00:00Z</time></wpt>
+  <wpt lat="21.024589" lon="105.857780"><name>Nhà hát Lớn</name><time>2026-11-01T03:30:00Z</time></wpt>
+  <trk><name>Đi bộ quanh hồ</name><trkseg>
+    <trkpt lat="21.028511" lon="105.852180"><time>2026-11-01T01:00:00Z</time></trkpt>
+    <trkpt lat="21.029400" lon="105.852300"><time>2026-11-01T01:20:00Z</time></trkpt>
+    <trkpt lat="21.030653" lon="105.852448"><time>2026-11-01T02:00:00Z</time></trkpt>
+    <trkpt lat="21.028100" lon="105.855000"><time>2026-11-01T02:40:00Z</time></trkpt>
+    <trkpt lat="21.024589" lon="105.857780"><time>2026-11-01T03:30:00Z</time></trkpt>
+  </trkseg></trk>
+</gpx>

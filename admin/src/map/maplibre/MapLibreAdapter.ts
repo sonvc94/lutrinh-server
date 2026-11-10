@@ -6,8 +6,13 @@ import {
   Map as MlMap,
   Marker,
   NavigationControl,
+  setWorkerUrl,
 } from 'maplibre-gl'
 import type { GeoJSONSource } from 'maplibre-gl'
+// maplibre-gl 6 starts its worker from a sibling file next to its own module; the bundle has no
+// such file (the request fell through to index.html: "Worker failed to load", no tiles, no lines).
+// Emit the self-contained worker as an asset and point maplibre at it.
+import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url'
 import { OPENFREEMAP_CREDIT, OPENFREEMAP_STYLE, TOPO_PAINT } from '../basemap/openfreemap'
 import type {
   Bounds,
@@ -20,6 +25,8 @@ import type {
 } from '../MapAdapter'
 import type { Feature as GFeature, FeatureCollection, LineString, Point } from 'geojson'
 import css from './pins.module.css'
+
+setWorkerUrl(workerUrl)
 
 const SIGNAL = '#E4572E'
 const SIGNAL_DEEP = '#B83A16'
@@ -39,7 +46,7 @@ function line(path: LngLat[], props: Record<string, unknown>): Feature {
 export class MapLibreAdapter implements MapAdapter {
   private map: MlMap | null = null
   private ready = false
-  private markers = new Map<string, { marker: Marker; el: HTMLDivElement }>()
+  private markers = new Map<string, { marker: Marker; el: HTMLDivElement; root: HTMLDivElement }>()
   private clickCbs = new Set<(p: LngLat) => void>()
   private pinClickCbs = new Set<(id: string) => void>()
   private dragCbs = new Set<(id: string, p: LngLat) => void>()
@@ -177,28 +184,33 @@ export class MapLibreAdapter implements MapAdapter {
       seen.add(s.id)
       let m = this.markers.get(s.id)
       if (!m) {
+        // maplibre owns the root's classes (maplibregl-marker: position) and its transform;
+        // our look goes on an inner element, or the pins drift out of place
+        const root = document.createElement('div')
+        root.classList.add(PIN_CLASS)
         const el = document.createElement('div')
-        el.addEventListener('click', (ev) => {
+        root.append(el)
+        root.addEventListener('click', (ev) => {
           ev.stopPropagation()
           this.pinClickCbs.forEach((cb) => cb(s.id))
         })
-        const marker = new Marker({ element: el, draggable: this.draggable })
+        const marker = new Marker({ element: root, draggable: this.draggable })
           .setLngLat([s.at.lng, s.at.lat])
           .addTo(map)
         marker.on('dragend', () => {
           const p = marker.getLngLat()
           this.dragCbs.forEach((cb) => cb(s.id, { lng: p.lng, lat: p.lat }))
         })
-        m = { marker, el }
+        m = { marker, el, root }
         this.markers.set(s.id, m)
       }
       m.marker.setLngLat([s.at.lng, s.at.lat])
-      const cls = [PIN_CLASS, css.pin, css[s.kind]]
+      const cls = [css.pin, css[s.kind]]
       if (s.id === selectedId) cls.push(css.selected)
       m.el.className = cls.filter(Boolean).join(' ')
       m.el.textContent = s.label
-      m.el.title = s.title
-      m.el.setAttribute('data-stop', s.id)
+      m.root.title = s.title
+      m.root.setAttribute('data-stop', s.id)
     }
     for (const [id, m] of this.markers) {
       if (!seen.has(id)) {

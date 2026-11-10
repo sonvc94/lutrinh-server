@@ -5,7 +5,8 @@
   background: var(--parchment);
   overflow: hidden;
 }
-.map {
+.wrap > .map {
+  /* beats .maplibregl-map { position: relative } from the lazily loaded maplibre CSS */
   position: absolute;
   inset: 0;
 }

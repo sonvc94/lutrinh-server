@@ -51,7 +51,7 @@ Run from `server/` after Setup. The public API contract and the Mate decisions b
 ```sh
 export LUTRINH_DATA_DIR=$LUTRINH_TMP/local && mkdir -p $LUTRINH_DATA_DIR/db   # db/ is not created for you
 uv run alembic upgrade head
-uv run lutrinh admin create            # once; prints the TOTP URI + backup codes (admin UI not built yet)
+uv run lutrinh admin create            # once; prints the TOTP URI + backup codes (log in at /admin)
 uv run lutrinh seed-sample             # prints "Mã: XXXX-XXXX"; each run adds a new published route
 uv run lutrinh serve                   # 127.0.0.1:8000; Android emulator: --host 0.0.0.0 → http://10.0.2.2:8000
 ```
@@ -77,6 +77,43 @@ uv run lutrinh worker --once           # run what is due, then exit
 
 Rate limits apply to localhost too (10 failed lookups/hour → 429 lock); delete
 `$LUTRINH_DATA_DIR` and start again to reset.
+
+## Admin web (admin/)
+
+Node 24; npm cache under `/Volumes/wdblack/tmp` like everything else. The host needs no Node:
+`npm run build` writes `admin/dist`, which `lutrinh serve` serves at `/admin`.
+
+```sh
+cd admin && export npm_config_cache=/Volumes/wdblack/tmp/npm-cache
+npm ci
+npm run typecheck && npm run lint && npm test   # gate: tsc, eslint + prettier, vitest
+npm run build                                   # tsc + vite → admin/dist (open http://localhost:8000/admin)
+npm run dev                                     # :5173/admin/, proxies /admin/api to 127.0.0.1:8000 (LUTRINH_API to change)
+npm run gen:api                                 # src/api/schema.d.ts from create_app().openapi() via uv (no server needed)
+npm run build && env -u PLAYWRIGHT_BROWSERS_PATH npx playwright test   # e2e, below
+```
+
+The e2e (`e2e/publish-flow.spec.ts`) starts its own server (`e2e/server.mjs`, port 8123, fresh
+data dir under `/Volumes/wdblack/tmp/lutrinh-admin-web/e2e/`, admin created with
+`--password-stdin`, TOTP computed by `e2e/totp.ts`), logs in, imports `e2e/fixtures/*.gpx`,
+publishes, and checks `GET /api/v1/codes/<code>` with curl; Playwright stops the server after.
+Screenshots: `/Volumes/wdblack/tmp/lutrinh-admin-web/screens/`. No worker runs: uploads stay
+"Đang xử lý" and legs are only those from the GPX track. Browsers: Playwright's default cache
+(`env -u PLAYWRIGHT_BROWSERS_PATH`; `npx playwright install chromium` once).
+
+- Open it at `http://localhost:…`, not `127.0.0.1`: the `__Host-lt_session` cookie is Secure and
+  browsers accept that over plain http only for `localhost`.
+- Only `src/map/maplibre/` imports `maplibre-gl` (ESLint; `tests/lint/boundary.test.ts`).
+  maplibre-gl 6 loads its worker from a sibling file the bundle does not have: the adapter
+  imports `maplibre-gl-worker.mjs?url` and calls `setWorkerUrl` (without it the request falls
+  through to index.html, "Worker failed to load", no tiles and no lines). maplibre's CSS loads
+  after ours with equal specificity, and it owns the marker root (`maplibregl-marker` class and
+  transform): style an inner element, never overwrite the root's `className`.
+- 412 on `PUT draft` is routine: the worker writes a leg and bumps the revision. `DraftSaver`
+  re-reads the draft; when only `legs` changed it rebases the local edits (`rebaseLegs`) and
+  retries, otherwise it shows the conflict banner ("Tải lại"). Never resend over a newer draft.
+- Follow-up (Mate decision): there is no admin endpoint for media bytes yet. When
+  `GET /admin/api/v1/media/{id}/file` lands, change `mediaUrl()` in `src/media/mediaUrl.ts` only.
 
 ## Rules and traps
 
