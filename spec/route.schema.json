@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lutrinh.invalid/spec/route.schema.json",
+  "title": "lutrinh-route package, route.json, formatVersion 1",
+  "description": "One published version of a route. Media are referenced by sha256 only; the package holds no absolute URLs. Cross-references (stop/media ids, leg targets, day <= route.days, size totals) are checked by the integrity rules in spec/README.md, which JSON Schema cannot express.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "formatVersion", "route", "stops", "legs", "media", "size"],
+  "properties": {
+    "format": { "const": "lutrinh-route" },
+    "formatVersion": { "const": 1 },
+    "route": { "$ref": "#/$defs/route" },
+    "stops": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 200,
+      "items": { "$ref": "#/$defs/stop" }
+    },
+    "legs": {
+      "type": "array",
+      "maxItems": 199,
+      "items": { "$ref": "#/$defs/leg" }
+    },
+    "media": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/media" }
+    },
+    "size": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["media", "files"],
+      "properties": {
+        "media": { "description": "Sum of media[].bytes.", "type": "integer", "minimum": 0 },
+        "files": { "description": "Number of media files = length of media[] (route.json not counted).", "type": "integer", "minimum": 0 }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{0,39}$"
+    },
+    "trimmed": {
+      "description": "No leading or trailing whitespace.",
+      "type": "string",
+      "pattern": "^(?:$|\\S(?:[\\s\\S]*\\S)?)$"
+    },
+    "profile": { "enum": ["motorbike", "car", "bus", "walk"] },
+    "route": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "publishedAt", "title", "description", "days", "cover", "region", "credits"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^rt_[a-z0-9]{8,32}$" },
+        "version": { "type": "integer", "minimum": 1 },
+        "publishedAt": {
+          "description": "UTC, second precision.",
+          "type": "string",
+          "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]Z$"
+        },
+        "title": { "allOf": [{ "$ref": "#/$defs/trimmed" }, { "minLength": 1, "maxLength": 60 }] },
+        "description": { "allOf": [{ "$ref": "#/$defs/trimmed" }, { "maxLength": 1000 }] },
+        "days": { "type": "integer", "minimum": 1, "maximum": 30 },
+        "cover": {
+          "description": "id of a photo in media[], or null (the app picks automatically).",
+          "oneOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }]
+        },
+        "region": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["bounds", "readyMade"],
+          "properties": {
+            "bounds": {
+              "description": "Bounding box of all stops and leg paths.",
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["south", "west", "north", "east"],
+              "properties": {
+                "south": { "type": "number", "minimum": -90, "maximum": 90 },
+                "west": { "type": "number", "minimum": -180, "maximum": 180 },
+                "north": { "type": "number", "minimum": -90, "maximum": 90 },
+                "east": { "type": "number", "minimum": -180, "maximum": 180 }
+              }
+            },
+            "readyMade": {
+              "description": "Key of the app's ready-made offline region (R15), e.g. ha-giang, or null.",
+              "oneOf": [{ "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" }, { "type": "null" }]
+            }
+          }
+        },
+        "credits": {
+          "description": "Route-level attribution lines shown in the app.",
+          "type": "array",
+          "items": { "allOf": [{ "$ref": "#/$defs/trimmed" }, { "minLength": 1 }] }
+        }
+      }
+    },
+    "stop": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "day", "time", "title", "note", "lat", "lng", "arrival", "media"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "day": { "description": "1-based day of the route, <= route.days.", "type": "integer", "minimum": 1, "maximum": 30 },
+        "time": {
+          "description": "Local planned time HH:mm, or null (the app then uses 08:00 + the stop's position in minutes).",
+          "oneOf": [{ "type": "string", "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$" }, { "type": "null" }]
+        },
+        "title": { "allOf": [{ "$ref": "#/$defs/trimmed" }, { "minLength": 1, "maxLength": 80 }] },
+        "note": { "allOf": [{ "$ref": "#/$defs/trimmed" }, { "maxLength": 2000 }] },
+        "lat": { "type": "number", "minimum": -90, "maximum": 90 },
+        "lng": { "type": "number", "minimum": -180, "maximum": 180 },
+        "arrival": {
+          "description": "How the traveller reaches this stop from the previous one (app TransportMode); null = not set.",
+          "oneOf": [
+            { "enum": ["walk", "motorbike", "car", "bus", "train", "plane", "boat"] },
+            { "type": "null" }
+          ]
+        },
+        "media": {
+          "description": "Ordered ids of media[] items (photo position = index).",
+          "type": "array",
+          "maxItems": 30,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/id" }
+        }
+      }
+    },
+    "leg": {
+      "description": "Road route of the leg that ends at stop `to` (from the previous stop in stops[] order).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["to", "profile", "usedProfile", "source", "status", "distanceM", "durationS", "path"],
+      "properties": {
+        "to": { "$ref": "#/$defs/id" },
+        "profile": { "$ref": "#/$defs/profile" },
+        "usedProfile": {
+          "description": "Profile that answered when it differs from `profile` (car fallback), else null.",
+          "oneOf": [{ "$ref": "#/$defs/profile" }, { "type": "null" }]
+        },
+        "source": {
+          "description": "Where the line came from: a router id (valhalla, osrm), manual (drawn in the admin), gpx (cut from an imported track).",
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,31}$"
+        },
+        "status": { "enum": ["ok", "no_route", "too_far"] },
+        "distanceM": { "type": "number", "minimum": 0 },
+        "durationS": { "type": "number", "minimum": 0 },
+        "path": {
+          "description": "polyline6 of the road line (empty when status is not ok).",
+          "type": "string",
+          "pattern": "^[?-~]*$"
+        }
+      }
+    },
+    "media": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "sha256", "type", "bytes", "w", "h", "durationMs", "credit"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "sha256": { "description": "Lower-case hex sha256 of the file; also its name in the package.", "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "type": { "enum": ["photo", "video"] },
+        "bytes": { "type": "integer", "minimum": 1 },
+        "w": { "type": "integer", "minimum": 1, "maximum": 2560 },
+        "h": { "type": "integer", "minimum": 1, "maximum": 2560 },
+        "durationMs": { "oneOf": [{ "type": "integer", "minimum": 1, "maximum": 60000 }, { "type": "null" }] },
+        "credit": {
+          "description": "Source/licence shown in the app; required on every item (publish blocker).",
+          "allOf": [{ "$ref": "#/$defs/trimmed" }, { "minLength": 1 }]
+        }
+      },
+      "if": { "properties": { "type": { "const": "video" } } },
+      "then": { "properties": { "durationMs": { "type": "integer" } } },
+      "else": { "properties": { "durationMs": { "type": "null" } } }
+    }
+  }
+}

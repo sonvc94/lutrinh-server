@@ -1,0 +1,45 @@
+{
+ "description": "RFC 8785 (JCS) canonical JSON, as used for route.json bytes and their sha256. Numbers are IEEE-754 doubles. `input` is any JSON text; `canonical` is the exact expected output (UTF-8). Cases with `error` must be rejected.",
+ "cases": [
+  {
+   "name": "key order and literals",
+   "input": "{\"b\": 1, \"a\": [true, false, null], \"c\": {}}",
+   "canonical": "{\"a\":[true,false,null],\"b\":1,\"c\":{}}"
+  },
+  {
+   "name": "numbers (ECMAScript Number toString)",
+   "input": "[5.0, -0.0, 0.1, 1e21, 1e20, 1e-7, 0.000001, 123.456, -1.5e-10, 22.8233, 104.9836, 43120, 9007199254740991, 1E2, 2.50]",
+   "canonical": "[5,0,0.1,1e+21,100000000000000000000,1e-7,0.000001,123.456,-1.5e-10,22.8233,104.9836,43120,9007199254740991,100,2.5]"
+  },
+  {
+   "name": "string escapes",
+   "input": "\"\\u0041\\u00e9\\n\\t\\b\\f\\r\\u001f\\\"\\\\\\/\\u2028 Hà Giang ₫\"",
+   "canonical": "\"Aé\\n\\t\\b\\f\\r\\u001f\\\"\\\\/  Hà Giang ₫\""
+  },
+  {
+   "name": "keys sorted by UTF-16 code units, not code points",
+   "input": "{\"ﬁ\": 3, \"😀\": 2, \"€\": 1, \"a\": 0}",
+   "canonical": "{\"a\":0,\"€\":1,\"😀\":2,\"ﬁ\":3}"
+  },
+  {
+   "name": "nested arrays keep order",
+   "input": "[[3, 2], {\"z\": [1, {\"y\": 2, \"x\": 1}]}]",
+   "canonical": "[[3,2],{\"z\":[1,{\"x\":1,\"y\":2}]}]"
+  },
+  {
+   "name": "NaN",
+   "input": "[NaN]",
+   "error": "not_json"
+  },
+  {
+   "name": "duplicate key",
+   "input": "{\"a\": 1, \"a\": 2}",
+   "error": "duplicate_key"
+  },
+  {
+   "name": "integers beyond 2^53-1 are doubles",
+   "input": "[9007199254740993, 64010633007109840, 1e300]",
+   "canonical": "[9007199254740992,64010633007109840,1e+300]"
+  }
+ ]
+}

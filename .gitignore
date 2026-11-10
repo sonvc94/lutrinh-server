@@ -1,0 +1,25 @@
+# Python (venv lives in server/.venv; caches are local only)
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+dist/
+build/
+
+# Local databases and data
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+/var/
+
+# Admin web (later)
+node_modules/
+admin/dist/
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/

@@ -1,0 +1,705 @@
+{
+ "description": "Mutations of samples/ha-giang-4n/route.json. Apply `ops` (RFC 6902 add/remove/replace; '-' appends) to the parsed sample, then read it as an app/server would. `expect` = the set of problem codes: [] = valid; 'schema' = fails route.schema.json (integrity rules are only run on schema-valid documents); 'format_unsupported' = formatVersion newer than 1 (checked before the schema); other codes = integrity rules in README.md.",
+ "base": "samples/ha-giang-4n/route.json",
+ "cases": [
+  {
+   "name": "unchanged sample",
+   "ops": [],
+   "expect": []
+  },
+  {
+   "name": "no legs at all (legs are optional)",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/legs",
+     "value": []
+    }
+   ],
+   "expect": []
+  },
+  {
+   "name": "cover null",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/route/cover",
+     "value": null
+    }
+   ],
+   "expect": []
+  },
+  {
+   "name": "every time null",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/stops/0/time",
+     "value": null
+    },
+    {
+     "op": "replace",
+     "path": "/stops/1/time",
+     "value": null
+    },
+    {
+     "op": "replace",
+     "path": "/stops/2/time",
+     "value": null
+    },
+    {
+     "op": "replace",
+     "path": "/stops/3/time",
+     "value": null
+    },
+    {
+     "op": "replace",
+     "path": "/stops/4/time",
+     "value": null
+    },
+    {
+     "op": "replace",
+     "path": "/stops/5/time",
+     "value": null
+    },
+    {
+     "op": "replace",
+     "path": "/stops/6/time",
+     "value": null
+    },
+    {
+     "op": "replace",
+     "path": "/stops/7/time",
+     "value": null
+    },
+    {
+     "op": "replace",
+     "path": "/stops/8/time",
+     "value": null
+    }
+   ],
+   "expect": []
+  },
+  {
+   "name": "newer formatVersion",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/formatVersion",
+     "value": 2
+    }
+   ],
+   "expect": [
+    "format_unsupported"
+   ]
+  },
+  {
+   "name": "wrong format name",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/format",
+     "value": "gpx"
+    }
+   ],
+   "expect": [
+    "schema"
+   ]
+  },
+  {
+   "name": "empty title",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/route/title",
+     "value": ""
+    }
+   ],
+   "expect": [
+    "schema"
+   ]
+  },
+  {
+   "name": "title 61 characters",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/route/title",
+     "value": "ĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐ"
+    }
+   ],
+   "expect": [
+    "schema"
+   ]
+  },
+  {
+   "name": "title 60 characters",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/route/title",
+     "value": "ĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐĐ"
+    }
+   ],
+   "expect": []
+  },
+  {
+   "name": "title not trimmed",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/route/title",
+     "value": " Hà Giang"
+    }
+   ],
+   "expect": [
+    "schema"
+   ]
+  },
+  {
+   "name": "description 1001 characters",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/route/description",
+     "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+   ],
+   "expect": [
+    "schema"
+   ]
+  },
+  {
+   "name": "days 31",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/route/days",
+     "value": 31
+    }
+   ],
+   "expect": [
+    "schema"
+   ]
+  },
+  {
+   "name": "only one stop",
+   "ops": [
+    {
+     "op": "remove",
+     "path": "/stops/8"
+    },
+    {
+     "op": "remove",
+     "path": "/stops/7"
+    },
+    {
+     "op": "remove",
+     "path": "/stops/6"
+    },
+    {
+     "op": "remove",
+     "path": "/stops/5"
+    },
+    {
+     "op": "remove",
+     "path": "/stops/4"
+    },
+    {
+     "op": "remove",
+     "path": "/stops/3"
+    },
+    {
+     "op": "remove",
+     "path": "/stops/2"
+    },
+    {
+     "op": "remove",
+     "path": "/stops/1"
+    }
+   ],
+   "expect": [
+    "schema"
+   ]
+  },
+  {
+   "name": "stop title 81 characters",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/stops/0/title",
+     "value": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    }
+   ],
+   "expect": [
+    "schema"
+   ]
+  },
+  {
+   "name": "stop note 2001 characters",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/stops/0/note",
+     "value": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    }
+   ],
+   "expect": [
+    "schema"
+   ]
+  },
+  {
+   "name": "latitude 91",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/stops/0/lat",
+     "value": 91
+    }
+   ],
+   "expect": [
+    "schema"
+   ]
+  },
+  {
+   "name": "longitude -180.5",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/stops/0/lng",
+     "value": -180.5
+    }
+   ],
+   "expect": [
+    "schema"
+   ]
+  },
+  {
+   "name": "time 24:00",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/stops/0/time",
+     "value": "24:00"
+    }
+   ],
+   "expect": [
+    "schema"
+   ]
+  },
+  {
+   "name": "time 7:30",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/stops/0/time",
+     "value": "7:30"
+    }
+   ],
+   "expect": [
+    "schema"
+   ]
+  },
+  {
+   "name": "unknown transport",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/stops/1/arrival",
+     "value": "rocket"
+    }
+   ],
+   "expect": [
+    "schema"
+   ]
+  },
+  {
+   "name": "unknown leg profile",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/legs/0/profile",
+     "value": "train"
+    }
+   ],
+   "expect": [
+    "schema"
+   ]
+  },
+  {
+   "name": "unknown leg status",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/legs/0/status",
+     "value": "pending"
+    }
+   ],
+   "expect": [
+    "schema"
+   ]
+  },
+  {
+   "name": "empty credit",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/media/0/credit",
+     "value": ""
+    }
+   ],
+   "expect": [
+    "schema"
+   ]
+  },
+  {
+   "name": "credit missing",
+   "ops": [
+    {
+     "op": "remove",
+     "path": "/media/0/credit"
+    }
+   ],
+   "expect": [
+    "schema"
+   ]
+  },
+  {
+   "name": "photo with a duration",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/media/0/durationMs",
+     "value": 1000
+    }
+   ],
+   "expect": [
+    "schema"
+   ]
+  },
+  {
+   "name": "video without a duration",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/media/9/durationMs",
+     "value": null
+    }
+   ],
+   "expect": [
+    "schema"
+   ]
+  },
+  {
+   "name": "video 61 s",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/media/9/durationMs",
+     "value": 61000
+    }
+   ],
+   "expect": [
+    "schema"
+   ]
+  },
+  {
+   "name": "photo wider than 2560",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/media/0/w",
+     "value": 2561
+    }
+   ],
+   "expect": [
+    "schema"
+   ]
+  },
+  {
+   "name": "upper-case sha256",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/media/0/sha256",
+     "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    }
+   ],
+   "expect": [
+    "schema"
+   ]
+  },
+  {
+   "name": "absolute URL field",
+   "ops": [
+    {
+     "op": "add",
+     "path": "/media/0/url",
+     "value": "https://example.invalid/a.jpg"
+    }
+   ],
+   "expect": [
+    "schema"
+   ]
+  },
+  {
+   "name": "31 media on one stop",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/stops/0/media",
+     "value": [
+      "m_x0",
+      "m_x1",
+      "m_x2",
+      "m_x3",
+      "m_x4",
+      "m_x5",
+      "m_x6",
+      "m_x7",
+      "m_x8",
+      "m_x9",
+      "m_x10",
+      "m_x11",
+      "m_x12",
+      "m_x13",
+      "m_x14",
+      "m_x15",
+      "m_x16",
+      "m_x17",
+      "m_x18",
+      "m_x19",
+      "m_x20",
+      "m_x21",
+      "m_x22",
+      "m_x23",
+      "m_x24",
+      "m_x25",
+      "m_x26",
+      "m_x27",
+      "m_x28",
+      "m_x29",
+      "m_x30"
+     ]
+    }
+   ],
+   "expect": [
+    "schema"
+   ]
+  },
+  {
+   "name": "day after route end",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/stops/8/day",
+     "value": 5
+    }
+   ],
+   "expect": [
+    "day_after_end"
+   ]
+  },
+  {
+   "name": "duplicate stop id",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/stops/1/id",
+     "value": "s1"
+    }
+   ],
+   "expect": [
+    "duplicate_stop_id",
+    "unknown_stop"
+   ]
+  },
+  {
+   "name": "unknown media on a stop",
+   "ops": [
+    {
+     "op": "add",
+     "path": "/stops/2/media/-",
+     "value": "m_zz"
+    }
+   ],
+   "expect": [
+    "unknown_media"
+   ]
+  },
+  {
+   "name": "cover is a video",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/route/cover",
+     "value": "m_v10"
+    }
+   ],
+   "expect": [
+    "cover_not_photo"
+   ]
+  },
+  {
+   "name": "cover unknown",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/route/cover",
+     "value": "m_nope"
+    }
+   ],
+   "expect": [
+    "unknown_media"
+   ]
+  },
+  {
+   "name": "duplicate media id",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/media/1/id",
+     "value": "m_p01"
+    },
+    {
+     "op": "replace",
+     "path": "/stops/0/media",
+     "value": [
+      "m_p01"
+     ]
+    }
+   ],
+   "expect": [
+    "duplicate_media_id"
+   ]
+  },
+  {
+   "name": "orphan media",
+   "ops": [
+    {
+     "op": "add",
+     "path": "/media/-",
+     "value": {
+      "id": "m_extra",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "type": "photo",
+      "bytes": 1,
+      "w": 1,
+      "h": 1,
+      "durationMs": null,
+      "credit": "x"
+     }
+    },
+    {
+     "op": "replace",
+     "path": "/size/files",
+     "value": 15
+    },
+    {
+     "op": "replace",
+     "path": "/size/media",
+     "value": 40043288
+    }
+   ],
+   "expect": [
+    "orphan_media"
+   ]
+  },
+  {
+   "name": "leg to the first stop",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/legs/0/to",
+     "value": "s1"
+    }
+   ],
+   "expect": [
+    "leg_to_first_stop"
+   ]
+  },
+  {
+   "name": "two legs to one stop",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/legs/1/to",
+     "value": "s2"
+    }
+   ],
+   "expect": [
+    "duplicate_leg"
+   ]
+  },
+  {
+   "name": "legs out of stop order",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/legs/0/to",
+     "value": "s3"
+    },
+    {
+     "op": "replace",
+     "path": "/legs/1/to",
+     "value": "s2"
+    }
+   ],
+   "expect": [
+    "leg_order"
+   ]
+  },
+  {
+   "name": "leg to an unknown stop",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/legs/0/to",
+     "value": "s99"
+    }
+   ],
+   "expect": [
+    "unknown_stop"
+   ]
+  },
+  {
+   "name": "truncated path",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/legs/0/path",
+     "value": "_"
+    }
+   ],
+   "expect": [
+    "bad_path"
+   ]
+  },
+  {
+   "name": "size.media wrong",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/size/media",
+     "value": 1
+    }
+   ],
+   "expect": [
+    "size_mismatch"
+   ]
+  },
+  {
+   "name": "size.files counts route.json",
+   "ops": [
+    {
+     "op": "replace",
+     "path": "/size/files",
+     "value": 15
+    }
+   ],
+   "expect": [
+    "size_mismatch"
+   ]
+  }
+ ]
+}

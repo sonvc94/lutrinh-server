@@ -1,0 +1,43 @@
+[project]
+name = "lutrinh-server"
+version = "0.1.0"
+description = "Lữ Trình route server: route packages, codes, publishing"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "alembic>=1.13",
+    "jsonschema>=4.23",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    "sqlalchemy>=2.0.30",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.10",
+    "pytest>=8.2",
+    "ruff>=0.5",
+    "types-jsonschema",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["lutrinh"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+packages = ["lutrinh"]
