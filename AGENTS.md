@@ -25,8 +25,10 @@ cd server && uv sync          # downloads Python 3.12 into UV_PYTHON_INSTALL_DIR
 uv run pytest -q                       # everything: tests/spec (spec vectors) + tests/core
 uv run pytest tests/spec tests/core -q # the same, explicit
 uv run ruff check . && uv run ruff format --check . && uv run mypy
-# migrations on a fresh file:
-rm -f $LUTRINH_TMP/check.sqlite* && LUTRINH_DATABASE_URL=sqlite:///$LUTRINH_TMP/check.sqlite uv run alembic upgrade head && LUTRINH_DATABASE_URL=sqlite:///$LUTRINH_TMP/check.sqlite uv run alembic check
+# migrations on a fresh file (a directory, not a `check.sqlite*` glob: zsh aborts on no match):
+rm -rf $LUTRINH_TMP/check && mkdir -p $LUTRINH_TMP/check && export LUTRINH_DATABASE_URL=sqlite:///$LUTRINH_TMP/check/lutrinh.sqlite
+uv run alembic upgrade head && uv run alembic check   # → "No new upgrade operations detected."
+unset LUTRINH_DATABASE_URL
 ```
 
 ## Layout (server/)
