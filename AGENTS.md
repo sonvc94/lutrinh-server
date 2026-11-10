@@ -143,6 +143,11 @@ docker compose -f deploy/compose.yaml down
   put the data on a named volume with an override and `COMPOSE_FILE=deploy/compose.yaml:<override>`
   (`deploy/*.sh` honour it). Linux hosts are unaffected.
 - `bootstrap.sh --password-stdin` reads the password first: `docker compose run` swallows stdin.
+  Its output holds the TOTP secret twice (URI and "Khóa nhập tay") plus backup codes: redirect it
+  whole into the creds file, never filter it to the terminal.
+- Production: VM 106 (`ssh mate-server`), code in `/opt/lutrinh-server` (copied with `git
+  archive`, no git there), data `/var/lib/lutrinh`, host port 8090 behind nginx-proxy-manager +
+  Cloudflare (`CF-Connecting-IP`; deploy/README.md §3), restic repo `/var/backups/lutrinh-restic`.
 
 ## Rules and traps
 

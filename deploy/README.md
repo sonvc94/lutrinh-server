@@ -62,6 +62,14 @@ cp deploy/.env.example deploy/.env && chmod 600 deploy/.env
    Chạy mọi lệnh `docker compose` với `--profile tunnel` (hoặc đặt `COMPOSE_PROFILES=tunnel`
    trong `.env`).
 
+**Sau một reverse proxy có sẵn** (chế độ 2 sau nginx-proxy-manager + Cloudflare, như VM 106
+`luhanh.vuongchison.com`): proxy giữ 80/443 nên đặt `LUTRINH_HTTP_PORT=8090` và
+`LUTRINH_HTTPS_PORT` là một cổng trống khác (compose luôn mở cổng này, mặc định 443 sẽ đụng
+proxy). `LUTRINH_TRUSTED_PROXIES=private_ranges`; tên miền đi qua Cloudflare thì
+`LUTRINH_CLIENT_IP_HEADERS=CF-Connecting-IP` (`X-Real-IP` của NPM là IP Cloudflare,
+`X-Forwarded-For` lấy giá trị trái nhất, client giả được). Web quản trị đăng nhập được qua
+https của proxy. Kiểm tra: tra một mã rồi xem `ip_events.ip` là IP thật của máy mình.
+
 `LUTRINH_DATA_PATH` là thư mục dữ liệu (mặc định `/var/lib/lutrinh`). Cấu hình máy chủ thêm
 (`LUTRINH_MAINTENANCE`, `LUTRINH_MIN_APP_ANDROID`, …; xem `server/lutrinh/config.py`) đặt trong
 `deploy/app.env` (tuỳ chọn).
@@ -113,7 +121,8 @@ lấy bản `backups/db-*.sqlite` mới nhất làm `db/lutrinh.sqlite`, rồi `
 làm bước 1–3, `deploy/bootstrap.sh` (tạo tạm một tài khoản, sẽ bị bản khôi phục thay), rồi
 `deploy/backup.sh --restore`.
 
-Chạy mỗi đêm bằng systemd (đường dẫn trong unit là `/opt/lutrinh`):
+Chạy mỗi đêm bằng systemd (đường dẫn trong unit là `/opt/lutrinh`; mã ở chỗ khác thì sửa
+`ExecStart` khi chép, ví dụ `sed 's#/opt/lutrinh/#/opt/lutrinh-server/#'` trên VM 106):
 
 ```sh
 sudo cp deploy/systemd/lutrinh-backup.* /etc/systemd/system/
