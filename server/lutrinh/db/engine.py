@@ -19,7 +19,11 @@ def _sqlite_pragmas(dbapi_conn: Any, _record: Any) -> None:
 
 
 def make_engine(url: str | None = None) -> Engine:
-    engine = create_engine(url or get_settings().db_url)
+    url = url or get_settings().db_url
+    # FastAPI may run a request's dependencies and handler on different pool threads; a Session
+    # is still used by one thread at a time, so pysqlite's same-thread check is relaxed.
+    connect_args = {"check_same_thread": False} if url.startswith("sqlite") else {}
+    engine = create_engine(url, connect_args=connect_args)
     if engine.dialect.name == "sqlite":
         event.listen(engine, "connect", _sqlite_pragmas)
     return engine

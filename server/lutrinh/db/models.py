@@ -11,6 +11,12 @@
   live (non-revoked) code per route.
 * ``media``: uploaded/processed photos and videos; files live on disk under ``media/ab/cd/<sha>``.
 * ``jobs``: background work queue read by the worker process.
+* ``retired_codes``: codes of purged routes, so they are never issued again.
+* ``admin_users`` / ``admin_backup_codes`` / ``admin_sessions``: the one admin (D-7 A).
+* ``audit_log``: every admin write (who, when, which route, before/after).
+* ``uploads``: chunked uploads in progress (files under ``uploads/<id>/``).
+* ``imports``: GPX / app-backup imports, their preview and the route they created.
+* ``daily_counts``: per-day lookup/download counters (D-14 A), written by the public API.
 """
 
 from __future__ import annotations
@@ -79,6 +85,9 @@ class Route(Base):
     updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, onupdate=utcnow)
     unpublished_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
     deleted_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    # Draft revision the latest version was built from ("nháp có thay đổi" when they differ);
+    # null after a republish of an older version.
+    published_revision: Mapped[int | None] = mapped_column(Integer)
 
     draft: Mapped[Draft | None] = relationship(back_populates="route", cascade="all, delete-orphan")
     versions: Mapped[list[RouteVersion]] = relationship(
@@ -217,6 +226,136 @@ class Job(Base):
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
     started_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
     finished_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
+
+
+class RetiredCode(Base):
+    """A code whose route was purged: kept so it is never issued again (page 02)."""
+
+    __tablename__ = "retired_codes"
+
+    code: Mapped[str] = mapped_column(String(8), primary_key=True)
+    route_id: Mapped[str] = mapped_column(String(40))
+    retired_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class AdminUser(Base):
+    __tablename__ = "admin_users"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    username: Mapped[str] = mapped_column(String(40), unique=True)
+    password_hash: Mapped[str] = mapped_column(Text)
+    totp_secret: Mapped[str] = mapped_column(String(64))
+    # Last accepted TOTP time step: a code is never accepted twice (page 04 §G).
+    last_totp_step: Mapped[int | None] = mapped_column(Integer)
+    failed_count: Mapped[int] = mapped_column(Integer, default=0)
+    first_failed_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    locked_until: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, onupdate=utcnow)
+
+    backup_codes: Mapped[list[AdminBackupCode]] = relationship(
+        back_populates="admin", cascade="all, delete-orphan"
+    )
+    sessions: Mapped[list[AdminSession]] = relationship(
+        back_populates="admin", cascade="all, delete-orphan"
+    )
+
+
+class AdminBackupCode(Base):
+    __tablename__ = "admin_backup_codes"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    admin_id: Mapped[int] = mapped_column(
+        ForeignKey("admin_users.id", ondelete="CASCADE"), index=True
+    )
+    code_hash: Mapped[str] = mapped_column(Text)
+    used_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
+
+    admin: Mapped[AdminUser] = relationship(back_populates="backup_codes")
+
+
+class AdminSession(Base):
+    __tablename__ = "admin_sessions"
+
+    # sha256 hex of the cookie value; the cookie itself is never stored.
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    admin_id: Mapped[int] = mapped_column(
+        ForeignKey("admin_users.id", ondelete="CASCADE"), index=True
+    )
+    csrf_token: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    last_seen_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    expires_at: Mapped[datetime] = mapped_column(UTCDateTime)
+
+    admin: Mapped[AdminUser] = relationship(back_populates="sessions")
+
+
+class AuditEntry(Base):
+    __tablename__ = "audit_log"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
+    actor: Mapped[str] = mapped_column(String(40))
+    action: Mapped[str] = mapped_column(String(40))
+    # Plain ids, no foreign keys: the log outlives purged routes.
+    route_id: Mapped[str | None] = mapped_column(String(40), index=True)
+    target: Mapped[str | None] = mapped_column(String(80))
+    before: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    after: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+
+
+class Upload(Base):
+    __tablename__ = "uploads"
+    __table_args__ = (CheckConstraint("purpose IN ('media', 'import')", name="purpose"),)
+
+    # Same id as the media row or import it feeds.
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    purpose: Mapped[str] = mapped_column(String(8))
+    filename: Mapped[str] = mapped_column(Text)
+    content_type: Mapped[str | None] = mapped_column(String(100))
+    bytes: Mapped[int] = mapped_column(Integer)
+    chunk_bytes: Mapped[int] = mapped_column(Integer)
+    sha256: Mapped[str | None] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    completed_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
+
+
+class Import(Base):
+    __tablename__ = "imports"
+    __table_args__ = (
+        CheckConstraint("kind IN ('gpx', 'backup')", name="kind"),
+        CheckConstraint("status IN ('uploading', 'ready', 'failed', 'applied')", name="status"),
+    )
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    kind: Mapped[str] = mapped_column(String(8))
+    status: Mapped[str] = mapped_column(String(16), default="uploading")
+    filename: Mapped[str] = mapped_column(Text)
+    preview: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    error: Mapped[dict[str, Any] | None] = mapped_column(JSON)
+    route_id: Mapped[str | None] = mapped_column(
+        ForeignKey("routes.id", ondelete="SET NULL"), index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    applied_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
+
+    route: Mapped[Route | None] = relationship()
+
+
+class DailyCount(Base):
+    """Per-day counters (D-14 A). ``route_id`` "" = not tied to a route (e.g. unknown codes)."""
+
+    __tablename__ = "daily_counts"
+    __table_args__ = (
+        CheckConstraint("kind IN ('lookup', 'download', 'bad_lookup')", name="kind"),
+        Index("uq_daily_counts_day_route_kind", "day", "route_id", "kind", unique=True),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    day: Mapped[str] = mapped_column(String(10))  # yyyy-mm-dd, UTC
+    route_id: Mapped[str] = mapped_column(String(40), default="")
+    kind: Mapped[str] = mapped_column(String(16))
+    count: Mapped[int] = mapped_column(Integer, default=0)
 
 
 class ImmutableVersionError(RuntimeError):
