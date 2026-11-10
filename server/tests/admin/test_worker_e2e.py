@@ -43,3 +43,70 @@ def test_uploaded_photo_is_processed_by_the_worker(admin: Admin, client: TestCli
     assert b"Exif" not in stored and len(stored) == m["bytes"]
     job = client.get(f"{PREFIX}/jobs/{job_id}").json()
     assert job["status"] == "done"
+
+
+def test_media_file_serves_the_preview_and_the_original_once_processed(
+    admin: Admin, client: TestClient
+) -> None:
+    rid = client.post(f"{PREFIX}/routes", json={"title": "Hà Giang"}).json()["id"]
+    data = phone_jpeg((2000, 1500))
+    r = client.post(
+        f"{PREFIX}/media",
+        json={"routeId": rid, "filename": "IMG_2.JPG", "contentType": "image/jpeg",
+              "bytes": len(data)},
+    )  # fmt: skip
+    mid = r.json()["id"]
+    upload(client, "media", mid, data, r.json()["upload"]["chunkBytes"])
+    client.post(f"{PREFIX}/media/{mid}/complete")
+    pending = client.get(f"{PREFIX}/media/{mid}/file")
+    assert pending.status_code == 404 and pending.json()["error"]["code"] == "not_found"
+
+    ctx = Context(
+        admin.settings,
+        make_sessionmaker(admin.app.state.engine),
+        Routers(FakeRouter(), None, Throttle(0)),
+    )
+    assert worker.run(ctx, once=True, nightly=False) == 1
+    sha = client.get(f"{PREFIX}/media/{mid}").json()["sha256"]
+
+    full = client.get(f"{PREFIX}/media/{mid}/file")
+    assert full.status_code == 200 and full.headers["content-type"] == "image/jpeg"
+    assert full.content == media_service.file_path(admin.settings, sha, "photo").read_bytes()
+    assert full.headers["etag"] == f'"{sha}"'
+    assert full.headers["cache-control"].startswith("private")
+
+    small = client.get(f"{PREFIX}/media/{mid}/file", params={"size": 640})
+    assert small.status_code == 200
+    assert small.content == media_service.thumb_path(admin.settings, sha).read_bytes()
+    assert small.headers["etag"] == f'"{sha}-w640"'
+    assert len(small.content) < len(full.content)
+
+    part = client.get(f"{PREFIX}/media/{mid}/file", headers={"Range": "bytes=0-99"})
+    assert part.status_code == 206 and part.content == full.content[:100]
+    assert part.headers["content-range"] == f"bytes 0-99/{len(full.content)}"
+
+    assert client.get(f"{PREFIX}/media/{mid}/file", params={"size": 320}).status_code == 422
+    assert client.get(f"{PREFIX}/media/m_nothere00000/file").status_code == 404
+
+
+def test_media_file_without_a_preview_serves_the_original(admin: Admin, client: TestClient) -> None:
+    rid = client.post(f"{PREFIX}/routes", json={"title": "Mộc Châu"}).json()["id"]
+    data = phone_jpeg((800, 600))
+    r = client.post(
+        f"{PREFIX}/media",
+        json={"routeId": rid, "filename": "IMG_3.JPG", "contentType": "image/jpeg",
+              "bytes": len(data)},
+    )  # fmt: skip
+    mid = r.json()["id"]
+    upload(client, "media", mid, data, r.json()["upload"]["chunkBytes"])
+    client.post(f"{PREFIX}/media/{mid}/complete")
+    ctx = Context(
+        admin.settings,
+        make_sessionmaker(admin.app.state.engine),
+        Routers(FakeRouter(), None, Throttle(0)),
+    )
+    assert worker.run(ctx, once=True, nightly=False) == 1
+    sha = client.get(f"{PREFIX}/media/{mid}").json()["sha256"]
+    media_service.thumb_path(admin.settings, sha).unlink(missing_ok=True)
+    small = client.get(f"{PREFIX}/media/{mid}/file", params={"size": 640})
+    assert small.status_code == 200 and small.headers["etag"] == f'"{sha}"'

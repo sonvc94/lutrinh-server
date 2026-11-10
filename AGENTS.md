@@ -97,8 +97,10 @@ The e2e (`e2e/publish-flow.spec.ts`) starts its own server (`e2e/server.mjs`, po
 data dir under `/Volumes/wdblack/tmp/lutrinh-admin-web/e2e/`, admin created with
 `--password-stdin`, TOTP computed by `e2e/totp.ts`), logs in, imports `e2e/fixtures/*.gpx`,
 publishes, and checks `GET /api/v1/codes/<code>` with curl; Playwright stops the server after.
-Screenshots: `/Volumes/wdblack/tmp/lutrinh-admin-web/screens/`. No worker runs: uploads stay
-"Đang xử lý" and legs are only those from the GPX track. Browsers: Playwright's default cache
+Screenshots: `/Volumes/wdblack/tmp/lutrinh-admin-web/screens/`. No worker process: the test runs
+the due jobs once with `e2e/process_jobs.py` (media for real, routers answer "unavailable", so no
+FOSSGIS calls and legs are only those from the GPX track). It also imports
+`e2e/fixtures/hoang-sa-truong-sa.gpx` and shoots the map there (`r30-*.png`, needs the tiles online). Browsers: Playwright's default cache
 (`env -u PLAYWRIGHT_BROWSERS_PATH`; `npx playwright install chromium` once).
 
 - Open it at `http://localhost:…`, not `127.0.0.1`: the `__Host-lt_session` cookie is Secure and
@@ -112,8 +114,13 @@ Screenshots: `/Volumes/wdblack/tmp/lutrinh-admin-web/screens/`. No worker runs: 
 - 412 on `PUT draft` is routine: the worker writes a leg and bumps the revision. `DraftSaver`
   re-reads the draft; when only `legs` changed it rebases the local edits (`rebaseLegs`) and
   retries, otherwise it shows the conflict banner ("Tải lại"). Never resend over a newer draft.
-- Follow-up (Mate decision): there is no admin endpoint for media bytes yet. When
-  `GET /admin/api/v1/media/{id}/file` lands, change `mediaUrl()` in `src/media/mediaUrl.ts` only.
+- Media bytes: `GET /admin/api/v1/media/{id}/file` (`?size=640` → preview, else original; Range;
+  404 until processed). `mediaUrl()` in `src/media/mediaUrl.ts` is the only place building it;
+  `RouteOut.cover` (draft cover media id) feeds the list thumbnail.
+- R30 (Hoàng Sa/Trường Sa) on the admin map: `src/map/sovereignty.ts` mirrors the app's
+  `map/SovereigntyLabels.kt`; the adapter sets text-field `coalesce(name:vi, name:latin, name)` and
+  `all(own filter, !hidden)` on the Positron label layers (their filters are expressions; a
+  legacy filter would need converting first) and adds our two labels below the route layers.
 
 ## Rules and traps
 

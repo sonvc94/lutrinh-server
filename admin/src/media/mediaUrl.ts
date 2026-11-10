@@ -1,13 +1,17 @@
 /**
- * Where a tile's picture comes from. The admin API has no endpoint that returns media bytes yet
- * (Mate decision: tiles without server images for now). When `GET /admin/api/v1/media/{id}/file`
- * lands, `mediaUrl` is the one place to change; until then it returns null and a tile shows the
- * local preview of a file uploaded in this tab, or a type icon + name + status.
+ * Where a tile's picture comes from: `GET /admin/api/v1/media/{id}/file` (admin session cookie,
+ * same origin). `thumb` asks for the worker's ≤ 640 px preview (`?size=640`; the server falls back
+ * to the original when there is none), `full` for the processed file itself.
+ * The server answers 404 until the worker has processed the upload, so callers that know the row
+ * use `previewUrl` with it; a file uploaded in this tab shows its local copy meanwhile.
  */
 export type MediaSize = 'thumb' | 'full'
 
-export function mediaUrl(_id: string, _size: MediaSize): string | null {
-  return null
+const BASE = '/admin/api/v1/media'
+
+export function mediaUrl(id: string, size: MediaSize): string {
+  const file = `${BASE}/${encodeURIComponent(id)}/file`
+  return size === 'thumb' ? `${file}?size=640` : file
 }
 
 const local = new Map<string, string>()
@@ -18,6 +22,13 @@ export function rememberLocal(id: string, file: Blob): void {
   local.set(id, URL.createObjectURL(file))
 }
 
-export function previewUrl(id: string, size: MediaSize): string | null {
-  return local.get(id) ?? mediaUrl(id, size)
+/** What an `<img>` shows for a media row: the local copy, else the server's once it is a ready photo. */
+export function previewUrl(
+  id: string,
+  size: MediaSize,
+  row?: { status: string; type: string },
+): string | null {
+  const own = local.get(id)
+  if (own) return own
+  return row?.status === 'ready' && row.type === 'photo' ? mediaUrl(id, size) : null
 }

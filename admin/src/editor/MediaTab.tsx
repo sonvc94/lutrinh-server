@@ -232,7 +232,7 @@ function Tile(props: {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: props.id })
   const [credit, setCredit] = useState(row?.credit ?? '')
   const [saved, setSaved] = useState(row?.credit ?? '')
-  const src = previewUrl(props.id, 'thumb')
+  const src = previewUrl(props.id, 'thumb', row)
   const video = row?.type === 'video'
   const status = row ? STATUS[row.status] : 'Không thấy tệp'
 

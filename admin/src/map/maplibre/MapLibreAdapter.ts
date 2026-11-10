@@ -14,6 +14,14 @@ import type { GeoJSONSource } from 'maplibre-gl'
 // Emit the self-contained worker as an asset and point maplibre at it.
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url'
 import { OPENFREEMAP_CREDIT, OPENFREEMAP_STYLE, TOPO_PAINT } from '../basemap/openfreemap'
+import {
+  LABEL_MAX_ZOOM,
+  LABEL_MIN_ZOOM,
+  isLabelLayer,
+  labelFilter,
+  labelsGeoJson,
+  labelText,
+} from '../sovereignty'
 import type {
   Bounds,
   LegLine,
@@ -32,6 +40,8 @@ const SIGNAL = '#E4572E'
 const SIGNAL_DEEP = '#B83A16'
 const FOREST = '#1F2A24'
 const PIN_CLASS = 'lt-pin'
+const SOVEREIGNTY_SOURCE = 'r30-archipelagos'
+const SOVEREIGNTY_LAYER = 'r30-archipelago-labels'
 
 type Feature = GFeature<LineString | Point>
 
@@ -69,6 +79,7 @@ export class MapLibreAdapter implements MapAdapter {
     map.addControl(new NavigationControl({ showCompass: false }), 'bottom-right')
     map.on('load', () => {
       this.restyle(map)
+      this.applySovereignty(map)
       this.addOverlay(map)
       this.ready = true
       this.drawLegs()
@@ -104,6 +115,40 @@ export class MapLibreAdapter implements MapAdapter {
         // a layer without that paint property: keep the basemap's own value
       }
     }
+  }
+
+  /**
+   * R30 (`../sovereignty.ts`, as the app's SovereigntyLayers.kt): every label layer shows
+   * Vietnamese names first and hides the labels the rule hides; then our two archipelago labels
+   * go on top of the basemap, below the route layers added after.
+   */
+  private applySovereignty(map: MlMap): void {
+    for (const layer of map.getStyle().layers ?? []) {
+      if (!isLabelLayer(layer)) continue
+      map.setLayoutProperty(layer.id, 'text-field', labelText() as never)
+      map.setFilter(layer.id, labelFilter(map.getFilter(layer.id)) as never)
+    }
+    map.addSource(SOVEREIGNTY_SOURCE, { type: 'geojson', data: labelsGeoJson() })
+    map.addLayer({
+      id: SOVEREIGNTY_LAYER,
+      type: 'symbol',
+      source: SOVEREIGNTY_SOURCE,
+      minzoom: LABEL_MIN_ZOOM,
+      maxzoom: LABEL_MAX_ZOOM,
+      layout: {
+        'text-field': ['get', 'name'],
+        'text-font': ['Noto Sans Italic'],
+        'text-size': ['interpolate', ['linear'], ['zoom'], 4, 11, 8, 14],
+        'text-letter-spacing': 0.05,
+        'text-max-width': 7,
+        'text-allow-overlap': true,
+      },
+      paint: {
+        'text-color': TOPO_PAINT.label,
+        'text-halo-color': TOPO_PAINT.halo,
+        'text-halo-width': 1.2,
+      },
+    })
   }
 
   private addOverlay(map: MlMap): void {

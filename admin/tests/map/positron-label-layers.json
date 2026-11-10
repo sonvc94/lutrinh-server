@@ -1,0 +1,128 @@
+[
+  {
+    "id": "waterway_line_label",
+    "type": "symbol",
+    "filter": ["match", ["geometry-type"], ["LineString", "MultiLineString"], true, false]
+  },
+  {
+    "id": "water_name_point_label",
+    "type": "symbol",
+    "filter": ["match", ["geometry-type"], ["MultiPoint", "Point"], true, false]
+  },
+  {
+    "id": "water_name_line_label",
+    "type": "symbol",
+    "filter": ["match", ["geometry-type"], ["LineString", "MultiLineString"], true, false]
+  },
+  {
+    "id": "highway-name-path",
+    "type": "symbol",
+    "filter": ["==", ["get", "class"], "path"]
+  },
+  {
+    "id": "highway-name-minor",
+    "type": "symbol",
+    "filter": [
+      "all",
+      ["match", ["geometry-type"], ["LineString", "MultiLineString"], true, false],
+      ["match", ["get", "class"], ["minor", "service", "track"], true, false]
+    ]
+  },
+  {
+    "id": "highway-name-major",
+    "type": "symbol",
+    "filter": [
+      "match",
+      ["get", "class"],
+      ["primary", "secondary", "tertiary", "trunk"],
+      true,
+      false
+    ]
+  },
+  {
+    "id": "highway-shield-non-us",
+    "type": "symbol",
+    "filter": [
+      "all",
+      ["<=", ["get", "ref_length"], 6],
+      ["match", ["geometry-type"], ["LineString", "MultiLineString"], true, false],
+      ["match", ["get", "network"], ["us-highway", "us-interstate", "us-state"], false, true]
+    ]
+  },
+  {
+    "id": "highway-shield-us-interstate",
+    "type": "symbol",
+    "filter": [
+      "all",
+      ["<=", ["get", "ref_length"], 6],
+      ["match", ["geometry-type"], ["LineString", "MultiLineString"], true, false],
+      ["match", ["get", "network"], ["us-interstate"], true, false]
+    ]
+  },
+  {
+    "id": "road_shield_us",
+    "type": "symbol",
+    "filter": [
+      "all",
+      ["<=", ["get", "ref_length"], 6],
+      ["match", ["geometry-type"], ["LineString", "MultiLineString"], true, false],
+      ["match", ["get", "network"], ["us-highway", "us-state"], true, false]
+    ]
+  },
+  {
+    "id": "airport",
+    "type": "symbol",
+    "filter": ["all", ["has", "iata"]]
+  },
+  {
+    "id": "label_other",
+    "type": "symbol",
+    "filter": [
+      "match",
+      ["get", "class"],
+      ["city", "continent", "country", "state", "town", "village"],
+      false,
+      true
+    ]
+  },
+  {
+    "id": "label_village",
+    "type": "symbol",
+    "filter": ["==", ["get", "class"], "village"]
+  },
+  {
+    "id": "label_town",
+    "type": "symbol",
+    "filter": ["==", ["get", "class"], "town"]
+  },
+  {
+    "id": "label_state",
+    "type": "symbol",
+    "filter": ["==", ["get", "class"], "state"]
+  },
+  {
+    "id": "label_city",
+    "type": "symbol",
+    "filter": ["all", ["==", ["get", "class"], "city"], ["!=", ["get", "capital"], 2]]
+  },
+  {
+    "id": "label_city_capital",
+    "type": "symbol",
+    "filter": ["all", ["==", ["get", "class"], "city"], ["==", ["get", "capital"], 2]]
+  },
+  {
+    "id": "label_country_3",
+    "type": "symbol",
+    "filter": ["all", ["==", ["get", "class"], "country"], [">=", ["get", "rank"], 3]]
+  },
+  {
+    "id": "label_country_2",
+    "type": "symbol",
+    "filter": ["all", ["==", ["get", "class"], "country"], ["==", ["get", "rank"], 2]]
+  },
+  {
+    "id": "label_country_1",
+    "type": "symbol",
+    "filter": ["all", ["==", ["get", "class"], "country"], ["==", ["get", "rank"], 1]]
+  }
+]

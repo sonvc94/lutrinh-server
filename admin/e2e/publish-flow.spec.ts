@@ -1,20 +1,25 @@
 /**
  * The acceptance flow (task server-admin-web): log in with password + TOTP, import a 3-stop GPX,
- * publish, read the code, and look it up on the public API (what the app does) with curl.
+ * publish, read the code, and look it up on the public API (what the app does) with curl; upload a
+ * photo, process it like the worker and see it come back from the server (tile, list cover); and
+ * the map over Hoàng Sa / Trường Sa (R30).
  * Screenshots of each screen go to /Volumes/wdblack/tmp/lutrinh-admin-web/screens/.
  */
 import { expect, test, type Page } from '@playwright/test'
 import { execFileSync } from 'node:child_process'
 import { mkdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { gradientPng } from './png'
 import { totp } from './totp'
 
 const ROOT = process.env.LUTRINH_E2E_ROOT ?? '/Volumes/wdblack/tmp/lutrinh-admin-web/e2e'
 const SCREENS = '/Volumes/wdblack/tmp/lutrinh-admin-web/screens'
 const GPX = join(import.meta.dirname, 'fixtures', 'ba-diem-ha-noi.gpx')
+const ARCHIPELAGOS = join(import.meta.dirname, 'fixtures', 'hoang-sa-truong-sa.gpx')
 const TITLE = 'Ba điểm quanh Hồ Gươm'
 
 interface Creds {
+  data: string
   password: string
   secret: string
   port: string
@@ -27,11 +32,24 @@ async function shot(page: Page, name: string) {
   await page.screenshot({ path: join(SCREENS, `${name}.png`) })
 }
 
-/** A tiny valid PNG (1×1, orange), so the upload needs no file on disk. */
-const PNG = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFhAJ/wlseKgAAAABJRU5ErkJggg==',
-  'base64',
-)
+const SERVER = join(import.meta.dirname, '..', '..', 'server')
+const TMP = '/Volumes/wdblack/tmp/lutrinh-server'
+
+/** What the worker does with the queued jobs (media for real, routers offline). */
+function processJobs(c: Creds): string {
+  return execFileSync('uv', ['run', 'python', join(import.meta.dirname, 'process_jobs.py')], {
+    cwd: SERVER,
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      LUTRINH_DATA_DIR: c.data,
+      TMPDIR: join(TMP, 'tmp'),
+      UV_CACHE_DIR: join(TMP, 'uv-cache'),
+      UV_PYTHON_INSTALL_DIR: join(TMP, 'python'),
+      PATH: `${join(TMP, 'uv-venv', 'bin')}:${process.env.PATH}`,
+    },
+  })
+}
 
 test('log in, import a 3-stop GPX, publish, and the code finds the route', async ({ page }) => {
   const c = creds()
@@ -119,19 +137,62 @@ test('log in, import a 3-stop GPX, publish, and the code finds the route', async
   console.log(`curl /api/v1/codes/${code} → title "${summary.title}", stops ${summary.stops}`)
   expect(summary.title).toBe(TITLE)
 
-  // C: media (upload stays "processing": no worker in this run)
+  // C: media; the worker step (offline routers, e2e/process_jobs.py) turns it into a server file
   await page.getByRole('link', { name: 'Ảnh/video' }).click()
   await page.getByLabel('Chọn ảnh, video').setInputFiles({
-    name: 'thap-rua.png',
+    name: 'hoang-hon.png',
     mimeType: 'image/png',
-    buffer: PNG,
+    buffer: gradientPng(1200, 800),
   })
-  await expect(page.getByTestId('media-tile')).toHaveCount(1)
+  const tile = page.getByTestId('media-tile')
+  await expect(tile).toHaveCount(1)
+  await expect(tile).toContainText('Đang xử lý')
+  console.log(processJobs(c).trim())
+  await expect(tile).not.toContainText('Đang xử lý', { timeout: 10_000 })
+  // a reload drops this tab's local copy: what shows now comes from the server
+  await page.reload()
+  const img = page.getByTestId('media-tile').locator('img')
+  await expect(img).toHaveAttribute('src', /\/admin\/api\/v1\/media\/[^/]+\/file\?size=640$/)
+  await expect.poll(() => img.evaluate((e: HTMLImageElement) => e.naturalWidth)).toBe(640)
   await shot(page, 'media')
+  await page.getByRole('button', { name: 'làm bìa lộ trình' }).click()
+  await expect(page.getByTestId('save-status')).toHaveAttribute('data-status', 'saved')
 
-  // A again: the list with the shared route and its code
+  // A again: the list with the shared route, its code and its cover from the server
   await page.goto('/admin/lo-trinh')
   await expect(page.getByText(TITLE)).toBeVisible()
   await expect(page.getByText(code!)).toBeVisible()
+  const cover = page.getByTestId('route-cover')
+  await expect(cover).toHaveCount(1)
+  await expect.poll(() => cover.evaluate((e: HTMLImageElement) => e.naturalWidth)).toBe(640)
   await shot(page, 'list')
+
+  // R30: a route over Hoàng Sa and Trường Sa; the editor map fits both archipelagos
+  await page.getByRole('link', { name: /Nhập/ }).first().click()
+  await page.getByLabel('Chọn tệp GPX').setInputFiles(ARCHIPELAGOS)
+  await expect(page.getByTestId('preview-stops')).toHaveText('2')
+  await page.getByRole('button', { name: 'Tạo lộ trình nháp' }).click()
+  await expect(page.getByTestId('editor-title')).toHaveText('Hoàng Sa và Trường Sa')
+  await expect(page.locator('.maplibregl-marker[data-stop]')).toHaveCount(2)
+  await page
+    .waitForResponse((r) => r.url().includes('openfreemap.org') && r.url().endsWith('.pbf'), {
+      timeout: 15_000,
+    })
+    .catch(() => console.log('no basemap tile within 15 s (offline?)'))
+  const settle = () => page.waitForTimeout(4000)
+  await settle()
+  await shot(page, 'r30-archipelagos')
+  await page.getByRole('button', { name: 'Zoom out' }).click()
+  await settle()
+  await shot(page, 'r30-overview')
+  // closer over Hoàng Sa (Đảo Phú Lâm, pin 1), where the tiles carry Chinese admin names
+  const pin = await page.locator('.maplibregl-marker[data-stop]').first().boundingBox()
+  await page.mouse.move((pin?.x ?? 0) + (pin?.width ?? 0) / 2, (pin?.y ?? 0) + (pin?.height ?? 0))
+  for (let i = 0; i < 6; i++) {
+    await page.mouse.wheel(0, -400)
+    await page.waitForTimeout(400)
+  }
+  await settle()
+  await shot(page, 'r30-hoang-sa')
+  expect(errors, 'map worker / page errors').toEqual([])
 })

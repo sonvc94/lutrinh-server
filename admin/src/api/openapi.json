@@ -1157,6 +1157,17 @@
       ],
       "title": "Code"
      },
+     "cover": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Cover"
+     },
      "createdAt": {
       "format": "date-time",
       "title": "Createdat",
@@ -2356,6 +2367,74 @@
      }
     },
     "summary": "Complete Media",
+    "tags": [
+     "files"
+    ]
+   }
+  },
+  "/admin/api/v1/media/{media_id}/file": {
+   "get": {
+    "description": "The bytes of a processed media row for the admin web (tiles, covers). ``?size=640`` →\nthe worker's ≤ 640 px preview of a photo when it exists, else the file itself. Range is\nanswered by ``FileResponse`` (206), like the public media endpoint.",
+    "operationId": "get_media_file_admin_api_v1_media__media_id__file_get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "media_id",
+      "required": true,
+      "schema": {
+       "title": "Media Id",
+       "type": "string"
+      }
+     },
+     {
+      "description": "640 → the photo's preview",
+      "in": "query",
+      "name": "size",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "integer"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "640 → the photo's preview",
+       "title": "Size"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "image/jpeg": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
+       },
+       "video/mp4": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
+       }
+      },
+      "description": "The processed file (or its ≤ 640 px preview); Range answers 206."
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Get Media File",
     "tags": [
      "files"
     ]

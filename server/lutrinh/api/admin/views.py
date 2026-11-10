@@ -32,6 +32,7 @@ def summary_out(sm: routes.Summary) -> s.RouteOut:
         draft_changed=sm.draft_changed,
         code=codes.display(sm.code) if sm.code else None,
         stops=sm.stops,
+        cover=sm.cover,
         created_at=r.created_at,
         updated_at=r.updated_at,
         deleted_at=r.deleted_at,

@@ -224,6 +224,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/api/v1/media/{media_id}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Media File
+         * @description The bytes of a processed media row for the admin web (tiles, covers). ``?size=640`` →
+         *     the worker's ≤ 640 px preview of a photo when it exists, else the file itself. Range is
+         *     answered by ``FileResponse`` (206), like the public media endpoint.
+         */
+        get: operations["get_media_file_admin_api_v1_media__media_id__file_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/api/v1/routes": {
         parameters: {
             query?: never;
@@ -889,6 +911,8 @@ export interface components {
         RouteOut: {
             /** Code */
             code: string | null;
+            /** Cover */
+            cover?: string | null;
             /**
              * Createdat
              * Format: date-time
@@ -1554,6 +1578,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Completed"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_media_file_admin_api_v1_media__media_id__file_get: {
+        parameters: {
+            query?: {
+                /** @description 640 → the photo's preview */
+                size?: number | null;
+            };
+            header?: never;
+            path: {
+                media_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The processed file (or its ≤ 640 px preview); Range answers 206. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/jpeg": string;
+                    "video/mp4": string;
                 };
             };
             /** @description Validation Error */

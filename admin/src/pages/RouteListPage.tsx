@@ -4,6 +4,7 @@ import { api, unwrap } from '../api/client'
 import { errorText } from '../api/errors'
 import { sumStats, useCreateRoute, useRoutes, useStats } from '../api/hooks'
 import type { RouteOut } from '../api/types'
+import { mediaUrl } from '../media/mediaUrl'
 import { Contours } from '../ui/Contours'
 import { Icon } from '../ui/Icon'
 import { Badge, Button, ui } from '../ui/ui'
@@ -148,9 +149,8 @@ function RouteRow({ r, downloads }: { r: RouteOut; downloads: number }) {
   return (
     <tr className={css.row} data-testid="route-row">
       <td className={css.thumbCell} onClick={open}>
-        {/* Covers need an admin media endpoint (follow-up); the contour mark stands in. */}
         <div className={css.thumb}>
-          <Contours rings={4} />
+          <Cover id={r.cover ?? null} title={r.title} />
         </div>
       </td>
       <td onClick={open}>
@@ -221,5 +221,20 @@ function RouteRow({ r, downloads }: { r: RouteOut; downloads: number }) {
         )}
       </td>
     </tr>
+  )
+}
+
+/** The draft's cover photo from the server; the contour mark when there is none or it fails to load (not processed yet). */
+function Cover({ id, title }: { id: string | null; title: string }) {
+  const [failed, setFailed] = useState<string | null>(null)
+  if (!id || failed === id) return <Contours rings={4} />
+  return (
+    <img
+      className={css.cover}
+      src={mediaUrl(id, 'thumb')}
+      alt={`Bìa: ${title}`}
+      data-testid="route-cover"
+      onError={() => setFailed(id)}
+    />
   )
 }

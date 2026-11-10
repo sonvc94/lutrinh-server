@@ -14,9 +14,12 @@ D publish/versions/code, E import, G login; style topo-outdoor). Commands are in
   `VersionsTab`.
 - `src/pages/` — `RouteListPage` (A), `ImportsPage` (E), `TrashPage` (restore, purge).
 - `src/map/` — `MapAdapter.ts` (the interface), `RouteMap.tsx` (React side), `polyline.ts`,
-  `basemap/openfreemap.ts`; `maplibre/` is the only place allowed to import `maplibre-gl` (ESLint
+  `basemap/openfreemap.ts`, `sovereignty.ts` (R30 Hoàng Sa/Trường Sa: a port of the app's
+  `SovereigntyLabels.kt` + filter, applied by the adapter to every label layer; keep the lists in
+  step with the app; test `tests/map/sovereignty.test.ts`); `maplibre/` is the only place allowed to import `maplibre-gl` (ESLint
   `no-restricted-imports`, tested by `tests/lint/boundary.test.ts`).
-- `src/media/mediaUrl.ts` — the one place that turns a media id into an image URL (server bytes
-  endpoint not there yet: local preview after upload, else icon + name + status).
+- `src/media/mediaUrl.ts` — the one place that turns a media id into an image URL:
+  `GET /admin/api/v1/media/{id}/file` (`?size=640` preview); `previewUrl` uses it only for a
+  ready photo, a file uploaded in this tab shows its local copy meanwhile.
 - `src/theme/` — topo-outdoor tokens as CSS variables; `src/ui/` small shared components.
 - `tests/` — Vitest (jsdom); `e2e/` — Playwright against a fresh server (`e2e/server.mjs`).

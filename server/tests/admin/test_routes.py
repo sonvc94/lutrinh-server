@@ -310,3 +310,13 @@ def test_admin_shell_serves_the_built_app(admin: Admin, anon: TestClient) -> Non
     assert anon.get("/admin/routes/rt_1").text == "<div id=root></div>"
     assert anon.get("/admin/../../etc/passwd").status_code in (200, 404)
     assert "root" in anon.get("/admin/%2e%2e/%2e%2e/etc/passwd").text
+
+
+def test_route_summary_carries_the_draft_cover(client: TestClient) -> None:
+    rid = _new_route(client)
+    assert client.get(f"{PREFIX}/routes/{rid}").json()["cover"] is None
+    body = client.get(f"{PREFIX}/routes/{rid}/draft").json()["body"]
+    r = _put(client, rid, body | {"cover": "m_cover0000000"})
+    assert r.status_code == 200, r.text
+    listed = {x["id"]: x for x in client.get(f"{PREFIX}/routes").json()}
+    assert listed[rid]["cover"] == "m_cover0000000"

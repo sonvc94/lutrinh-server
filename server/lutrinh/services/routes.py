@@ -90,6 +90,7 @@ class Summary:
     draft_changed: bool
     code: str | None
     stops: int
+    cover: str | None = None
 
 
 def status_of(route: Route, latest_version: int | None) -> str:
@@ -119,6 +120,7 @@ def summarise(session: Session, route: Route) -> Summary:
         draft_changed=latest is None or route.published_revision != revision,
         code=live.code if live else None,
         stops=len(body.get("stops") or []),
+        cover=body.get("cover") if isinstance(body.get("cover"), str) else None,
     )
 
 

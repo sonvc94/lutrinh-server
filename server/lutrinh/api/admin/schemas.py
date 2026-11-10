@@ -109,6 +109,8 @@ class RouteOut(Model):
     draft_changed: bool
     code: str | None
     stops: int
+    # The draft's cover photo (media id), for the list thumbnail.
+    cover: str | None = None
     created_at: datetime
     updated_at: datetime
     deleted_at: datetime | None

@@ -3,7 +3,8 @@
  * Playwright's web server: a fresh lutrinh server for one e2e run (never the dev data).
  * Data under /Volumes/wdblack/tmp/lutrinh-admin-web/e2e/<run>; the admin's password and TOTP
  * secret go to e2e/current.json there for the test. Serves admin/dist (run `npm run build` first).
- * Stopped by Playwright when the run ends. No worker: jobs stay queued (no router calls).
+ * Stopped by Playwright when the run ends. No worker process: the test runs the due jobs itself
+ * with e2e/process_jobs.py (offline routers).
  */
 import { execFileSync, spawn } from 'node:child_process'
 import { mkdirSync, writeFileSync } from 'node:fs'

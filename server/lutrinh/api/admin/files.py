@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Query, Request, Response
+from fastapi.responses import FileResponse
 
 from lutrinh.api.admin import schemas as s
 from lutrinh.api.admin import views
@@ -69,6 +70,47 @@ def list_media(
 @router.get("/media/{media_id}", response_model=s.MediaOut)
 def get_media(media_id: str, _: AdminDep, db: DbDep, settings: SettingsDep) -> s.MediaOut:
     return views.media_out(db, settings, media_service.get(db, media_id))
+
+
+_FILE_RESPONSES: dict[int | str, dict[str, Any]] = {
+    200: {
+        "description": "The processed file (or its ≤ 640 px preview); Range answers 206.",
+        "content": {
+            "image/jpeg": {"schema": {"type": "string", "format": "binary"}},
+            "video/mp4": {"schema": {"type": "string", "format": "binary"}},
+        },
+    }
+}
+
+
+@router.get("/media/{media_id}/file", response_class=FileResponse, responses=_FILE_RESPONSES)
+def get_media_file(
+    media_id: str,
+    _: AdminDep,
+    db: DbDep,
+    settings: SettingsDep,
+    size: Annotated[int | None, Query(description="640 → the photo's preview")] = None,
+) -> FileResponse:
+    """The bytes of a processed media row for the admin web (tiles, covers). ``?size=640`` →
+    the worker's ≤ 640 px preview of a photo when it exists, else the file itself. Range is
+    answered by ``FileResponse`` (206), like the public media endpoint."""
+    if size not in (None, 640):
+        raise ServiceError(422, "invalid_request", "size must be 640")
+    row = media_service.get(db, media_id)
+    if row.status != "ready" or row.sha256 is None:
+        raise ServiceError(404, "not_found", f"media {media_id}: not processed ({row.status})")
+    path = media_service.find_file(settings, row.sha256)
+    if path is None:
+        raise ServiceError(404, "not_found", f"media {media_id}: file missing on disk")
+    if size == 640 and path.suffix == ".jpg":
+        thumb = media_service.thumb_path(settings, row.sha256)
+        if thumb.is_file():
+            path = thumb
+    thumb_served = path.name.endswith(media_service.THUMB_SUFFIX)
+    etag = f'"{row.sha256}-w640"' if thumb_served else f'"{row.sha256}"'
+    # The id → sha256 link never changes once processed, but the bytes are admin-only.
+    headers = {"Cache-Control": "private, max-age=86400", "ETag": etag}
+    return FileResponse(path, media_type=media_service.CONTENT_TYPE[path.suffix], headers=headers)
 
 
 @router.put("/media/{media_id}/chunks/{n}", status_code=204, openapi_extra=_CHUNK_BODY)
