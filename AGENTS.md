@@ -36,9 +36,11 @@ unset LUTRINH_DATABASE_URL
 - `lutrinh/config.py` — `LUTRINH_DATA_DIR` (default `/var/lib/lutrinh`), `LUTRINH_DATABASE_URL`, `LUTRINH_SPEC_DIR` (default repo `spec/`).
 - `lutrinh/core/` — pure, no DB: `codes.py` (generate/normalise/parse, Luhn mod 30), `canonical_json.py` (RFC 8785), `package.py` (draft → `route.json`, schema + integrity check, `read`), `polyline.py`, `ids.py`.
 - `lutrinh/db/` — `models.py` (routes, drafts, route_versions, version_media, codes, media, jobs), `engine.py` (SQLite WAL + foreign keys), `migrations/` (Alembic; `alembic.ini` in `server/`).
-- `lutrinh/services/publishing.py` — `publish_draft(session, route_id)` → next immutable version.
-- Later tasks plug in as `lutrinh/api/{public,admin}.py`, `lutrinh/jobs/worker.py`, `lutrinh/adapters/{routing,storage,mail}/` (page 06 §1).
-- `tests/spec/` read the `spec/` files; `tests/core/` test the modules. `scripts/make_spec_sample.py` regenerates the sample package.
+- `lutrinh/core/` also: `rules.py` (publish blockers/warnings, size limits), `gpx.py` (defusedxml reader → draft), `dwell.py` (stays in a track), `backup.py` (app backup → draft), `geo.py`.
+- `lutrinh/services/` — `publishing.py` (`publish_draft`, `preflight`, `publish`, `unpublish`, `republish`), `codes.py` (issue/revoke/reissue/`lookup`), `routes.py` (CRUD, draft If-Match, legs, trash/purge), `uploads.py` + `media.py` + `imports.py` (chunked upload → media/GPX/backup), `auth.py` (Argon2id + TOTP + backup codes, sessions, lockout), `audit.py`, `jobs.py` (enqueue only), `errors.py` (`ServiceError`).
+- `lutrinh/api/` — `app.py` (`create_app`; `/openapi.json`; `/admin` serves `admin_dist_dir` or a placeholder), `deps.py` (session cookie `__Host-lt_session`, CSRF), `errors.py` (error envelope), `admin/` (routers under `/admin/api/v1`). `lutrinh/cli.py` — `uv run lutrinh admin create|reset` (prints TOTP URI + backup codes).
+- `lutrinh/adapters/mail/` — `Mailer` + log-only adapter. Later tasks: `lutrinh/api/public.py`, `lutrinh/jobs/worker.py` (runs the `jobs` rows), `adapters/{routing,storage}/` (page 06 §1).
+- `tests/spec/` read the `spec/` files; `tests/core/` test the modules; `tests/admin/` drive the API with `TestClient`. `scripts/make_spec_sample.py` regenerates the sample package.
 
 ## Rules and traps
 
@@ -49,3 +51,6 @@ unset LUTRINH_DATABASE_URL
 - Media rows need an ORM `relationship` to `Route`; without one SQLAlchemy may insert the child first and SQLite's foreign key check fails.
 - Canonical JSON reads numbers as doubles: an integer beyond 2^53−1 reads as a float. The server must not write such integers (`dumps` raises).
 - `codes` keeps revoked codes for ever (never reissued); a partial unique index allows one live code per route.
+- Admin tests use `base_url="https://testserver"`: the `__Host-` cookie is Secure and httpx drops it over http. Argon2 cost is lowered via settings in tests only.
+- FastAPI ≥0.16x wraps included routers in `_IncludedRouter` inside `app.routes`; the 401 walker in `tests/admin/test_auth.py` expands them via `effective_route_contexts()` (private API — recheck on upgrades).
+- A purged route's codes move to `retired_codes` so a code is never issued twice. Zip package export/import is deferred (Mate decision 1C).

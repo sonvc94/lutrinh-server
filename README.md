@@ -7,7 +7,7 @@ route onto their phone.
 | Path | What | State |
 | --- | --- | --- |
 | `spec/` | The `lutrinh-route` package format (formatVersion 1): JSON Schema, code vectors, canonical-JSON vectors, package vectors, a sample package. The Android app and the server both test against it. | done |
-| `server/` | Python 3.12 + uv: settings, SQLAlchemy models + Alembic, `core/` (codes, package, canonical JSON, polyline6), publishing service. | core only; no HTTP API, auth or worker yet |
+| `server/` | Python 3.12 + uv: settings, SQLAlchemy models + Alembic, `core/` (codes, package, canonical JSON, polyline6, rules, GPX, app backup), services, admin API (`/admin/api/v1`, FastAPI), `lutrinh admin` CLI. | admin API done; public API, worker and React admin not yet |
 | `admin/` | Admin web: TypeScript + React + MapLibre | not started |
 | `deploy/` | Docker Compose + Caddy, backups | not started |
 

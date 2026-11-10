@@ -66,8 +66,9 @@ Problem codes, as reported by `lutrinh.core.package.check` and expected by `pack
 | `size_mismatch` | `size.media` / `size.files` do not match `media[]` |
 
 Schema failures are reported as `schema`; integrity rules run only on schema-valid documents.
-Not here yet (later `core/rules.py`): times ascending within a day, package ≤ 300 MB,
-`route.json` ≤ 2 MB, publish warnings.
+Publish-time rules live in `server/lutrinh/core/rules.py` (not in the vectors): days and times
+ascending within a day, package ≤ 300 MB, `route.json` ≤ 2 MB block publishing; warnings for a
+large package, missing/failed/car-fallback/long legs.
 
 ## Codes
 
