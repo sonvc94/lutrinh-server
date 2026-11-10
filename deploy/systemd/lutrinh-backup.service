@@ -1,0 +1,8 @@
+[Unit]
+Description=Lữ Trình nightly backup (DB copy + restic off-host)
+Wants=network-online.target
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/lutrinh/deploy/backup.sh

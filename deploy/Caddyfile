@@ -1,0 +1,66 @@
+# Lữ Trình proxy (design page 06 §4–§5). One file, three modes chosen in deploy/.env:
+#   1. public domain: LUTRINH_SITE=lutrinh.example.com → automatic HTTPS (Let's Encrypt)
+#   2. LAN http:      LUTRINH_SITE=:80 (host port LUTRINH_HTTP_PORT)
+#   3. Cloudflare Tunnel: LUTRINH_SITE=:80, LUTRINH_TRUSTED_PROXIES=private_ranges,
+#      `--profile tunnel` (cloudflared → http://caddy:80)
+{
+	admin localhost:2019
+	servers {
+		# Whose X-Forwarded-For to believe (the tunnel connector in mode 3).
+		trusted_proxies static {$LUTRINH_TRUSTED_PROXIES:127.0.0.1/32}
+		client_ip_headers {$LUTRINH_CLIENT_IP_HEADERS:X-Forwarded-For}
+	}
+}
+
+# The API sees one X-Forwarded-For value: the client as Caddy resolved it (uvicorn trusts
+# every proxy address, FORWARDED_ALLOW_IPS=*, because only Caddy can reach it).
+(to_app) {
+	header_up X-Forwarded-For {client_ip}
+}
+
+{$LUTRINH_SITE::80} {
+	# Upload chunks are 8 MB (LUTRINH_UPLOAD_CHUNK_BYTES); nothing else is larger.
+	request_body {
+		max_size 10MB
+	}
+
+	# Public API. Media answers carry X-Accel-Redirect; Caddy then sends the file from the
+	# media volume itself (Range, ETag), so Python never holds a 40 MB download.
+	handle /api/* {
+		reverse_proxy app:8000 {
+			import to_app
+			@accel header X-Accel-Redirect *
+			handle_response @accel {
+				root * /var/lib/lutrinh/media
+				rewrite * {rp.header.X-Accel-Redirect}
+				header Cache-Control {rp.header.Cache-Control}
+				file_server
+			}
+		}
+	}
+
+	handle /admin/api/* {
+		reverse_proxy app:8000 {
+			import to_app
+		}
+	}
+
+	redir /admin /admin/ 308
+
+	# Admin SPA from the image (admin/dist): hashed assets immutable, index.html no-cache,
+	# unknown paths → index.html for React Router.
+	handle /admin/* {
+		root * /srv
+		@assets path /admin/assets/*
+		@other not path /admin/assets/*
+		header @assets Cache-Control "public, max-age=31536000, immutable"
+		header @other Cache-Control "no-cache"
+		try_files {path} /admin/index.html
+		encode zstd gzip
+		file_server
+	}
+
+	handle {
+		respond 404
+	}
+}

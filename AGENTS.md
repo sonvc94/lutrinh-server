@@ -122,6 +122,28 @@ FOSSGIS calls and legs are only those from the GPX track). It also imports
   `all(own filter, !hidden)` on the Positron label layers (their filters are expressions; a
   legacy filter would need converting first) and adds our two labels below the route layers.
 
+## Deploy (deploy/)
+
+Runbook: `deploy/README.md`. `deploy/.env` (from `.env.example`, gitignored) drives compose and
+the scripts; build context is the repo root (`deploy/Dockerfile.dockerignore`). Local check
+(LAN mode; name the project after the worktree, pick a free port in `deploy/.env`):
+
+```sh
+export COMPOSE_PROJECT_NAME=<worktree-dir>
+docker compose -f deploy/compose.yaml up -d --build
+curl -s localhost:$LUTRINH_HTTP_PORT/api/v1/meta; docker compose -f deploy/compose.yaml exec app lutrinh seed-sample
+docker compose -f deploy/compose.yaml down
+```
+
+- The admin build imports `../spec`: the node stage copies `spec/` beside `admin/`.
+- `app` and `worker` share image `lutrinh-app`; only `app` builds it (`worker: build: !reset null`).
+- Uvicorn trusts every proxy (`FORWARDED_ALLOW_IPS=*`, port 8000 unpublished); Caddy sends one
+  `X-Forwarded-For: {client_ip}`, so spoofed headers are dropped.
+- restic on Docker Desktop (macOS) gets EIO reading host-shared files; for a local backup drill
+  put the data on a named volume with an override and `COMPOSE_FILE=deploy/compose.yaml:<override>`
+  (`deploy/*.sh` honour it). Linux hosts are unaffected.
+- `bootstrap.sh --password-stdin` reads the password first: `docker compose run` swallows stdin.
+
 ## Rules and traps
 
 - `spec/` is the contract with the app. Changing a vector, the schema or the sample is a spec change; regenerate with the scripts, never hand-edit `samples/*/route.json` (it must stay canonical bytes; the test `test_sample_read_then_write_is_byte_identical` catches drift).

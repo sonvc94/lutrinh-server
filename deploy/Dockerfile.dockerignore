@@ -1,0 +1,14 @@
+# Context is the repository root; send only what the image needs.
+**/.git
+**/.venv
+**/node_modules
+**/__pycache__
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/.DS_Store
+admin/dist
+admin/test-results
+admin/playwright-report
+deploy/.env
+deploy/app.env
