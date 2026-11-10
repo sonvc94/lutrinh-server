@@ -12,7 +12,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from fastapi import FastAPI
-from fastapi.responses import FileResponse, HTMLResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse, Response
 from sqlalchemy import Engine
 
 from lutrinh.adapters.mail import LogMailer, Mailer
@@ -67,6 +67,10 @@ def create_app(
     errors.install(app)
     app.include_router(public.router)
     app.include_router(build_router())
+
+    @app.api_route("/", methods=["GET", "HEAD"], include_in_schema=False)
+    def root() -> RedirectResponse:
+        return RedirectResponse("/admin/", status_code=302)
 
     @app.get("/admin", include_in_schema=False)
     def admin_index() -> Response:

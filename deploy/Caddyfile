@@ -47,6 +47,9 @@
 
 	redir /admin /admin/ 308
 
+	# The bare domain opens the admin (302: may change later).
+	redir / /admin/ 302
+
 	# Admin SPA from the image (admin/dist): hashed assets immutable, index.html no-cache,
 	# unknown paths → index.html for React Router.
 	handle /admin/* {

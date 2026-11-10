@@ -6,7 +6,7 @@ Theo thiết kế trang 06 (§4–§9; D-18 A Docker Compose, D-19 A Caddy, D-21
 | --- | --- |
 | `Dockerfile` | Image `app` (Python 3.12 + uv, ffmpeg, `spec/`, `admin/dist`; uid 10001) và `caddy` (Caddyfile + `admin/dist`; uid 10002). Build từ gốc repo. |
 | `compose.yaml` | `app` (API, :8000 chỉ trong mạng Docker), `worker` (ảnh, video, chặng), `caddy` (cổng 80/443). Profile `tunnel` (cloudflared), `backup` (restic). |
-| `Caddyfile` | Ba chế độ chọn bằng `.env`: tên miền + HTTPS tự động, LAN http, sau Cloudflare Tunnel. Media qua `X-Accel-Redirect` (Range do Caddy lo), thân yêu cầu ≤ 10 MB. |
+| `Caddyfile` | Ba chế độ chọn bằng `.env`: tên miền + HTTPS tự động, LAN http, sau Cloudflare Tunnel. Media qua `X-Accel-Redirect` (Range do Caddy lo), thân yêu cầu ≤ 10 MB. `GET /` chuyển 302 sang `/admin/`. |
 | `.env.example` | Chép thành `.env` (quyền 600, không vào git). |
 | `bootstrap.sh` | Lần đầu: thư mục dữ liệu, build, migration, tài khoản quản trị, `up -d`. |
 | `backup.sh` | Sao lưu đêm (DB + restic ra ngoài host), `--now` (chỉ DB), `--restore`. |
