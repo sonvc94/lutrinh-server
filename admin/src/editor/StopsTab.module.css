@@ -1,0 +1,231 @@
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 420px;
+  height: 100%;
+}
+.mapCol {
+  position: relative;
+  min-height: 0;
+}
+.tools {
+  position: absolute;
+  top: var(--s-l);
+  left: var(--s-l);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-xs);
+  padding: var(--s-xs);
+  background: var(--card);
+  border-radius: var(--r-chip);
+  box-shadow: var(--lift-chip);
+}
+.tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+.tool:hover {
+  background: var(--sand);
+}
+.toolOn {
+  background: var(--forest);
+  color: var(--card);
+}
+.toolOn:hover {
+  background: var(--forest);
+}
+.hint {
+  position: absolute;
+  top: var(--s-l);
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 70%;
+  padding: var(--s-xs) var(--s-m);
+  background: var(--forest);
+  color: var(--card);
+  border-radius: var(--r-chip);
+  font-size: 13px;
+  box-shadow: var(--lift-chip);
+}
+.legPanel {
+  position: absolute;
+  left: var(--s-l);
+  bottom: var(--s-l);
+  width: min(460px, calc(100% - 32px));
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-s);
+  padding: var(--s-l);
+  background: var(--card);
+  border-radius: var(--r-panel);
+  box-shadow: var(--lift-panel);
+}
+.legPanel p {
+  margin: 0;
+}
+.legTitle {
+  font-weight: 700;
+}
+.legNums {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-l);
+}
+.legNums b {
+  font-size: 30px;
+  line-height: 36px;
+}
+.legActions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-s);
+}
+.arrival select {
+  min-height: 32px;
+  padding: 0 var(--s-s);
+  font-size: 13px;
+}
+.listCol {
+  overflow: auto;
+  padding: var(--s-l);
+  background: var(--parchment);
+  border-left: 1px solid var(--grid);
+}
+.listHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--s-m);
+}
+.listButtons {
+  display: flex;
+  gap: var(--s-xs);
+}
+.empty {
+  color: var(--ink-muted);
+}
+.day {
+  padding: var(--s-xs) 0 var(--s-m);
+  border-radius: var(--r-chip);
+}
+.dayOver {
+  background: var(--sand);
+}
+.dayHead {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--s-xs) var(--s-xs) var(--s-s);
+  border-bottom: 1px solid var(--grid);
+  margin-bottom: var(--s-xs);
+}
+.linkButton {
+  border: 0;
+  background: none;
+  color: var(--signal-deep);
+  font-size: 13px;
+  cursor: pointer;
+}
+.legChip {
+  margin: 2px 0 2px 52px;
+  font-family: var(--font-num);
+  font-size: 15px;
+  color: var(--signal-deep);
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-xs);
+  padding: var(--s-xs);
+  border-radius: var(--r-chip);
+  background: var(--card);
+  box-shadow: var(--ledge-shadow);
+}
+.rowOn {
+  outline: 2px solid var(--signal);
+}
+.grip {
+  display: inline-flex;
+  padding: var(--s-xs);
+  border: 0;
+  background: none;
+  color: var(--ink-muted);
+  cursor: grab;
+  touch-action: none;
+}
+.rowMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--s-m);
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  padding: var(--s-xs);
+}
+.disc {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--card);
+  color: var(--card);
+  font-family: var(--font-num);
+  font-weight: 700;
+  font-size: 15px;
+}
+.discStart {
+  background: var(--trail);
+}
+.discStep {
+  background: var(--waypoint);
+}
+.discEnd {
+  background: var(--forest);
+}
+.rowText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.rowTitle {
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rowMeta {
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-m);
+  margin: var(--s-xs) 0 var(--s-s);
+  padding: var(--s-l);
+  background: var(--card);
+  border-radius: var(--r-card);
+  box-shadow: var(--ledge-shadow);
+}
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 80px 1.3fr;
+  gap: var(--s-s);
+}
+.formFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}

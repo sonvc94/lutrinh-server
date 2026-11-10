@@ -1,0 +1,78 @@
+/* Topo outdoor tokens (D-12 A), re-stated from the app's docs/08-design.md §2–§4.
+   Hues: paper, ink, forest; signal orange only for the route; trail/waypoint only as pins. */
+@font-face {
+  font-family: 'Noto Sans';
+  src: url('./fonts/noto_sans_regular.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Noto Sans';
+  src: url('./fonts/noto_sans_medium.ttf') format('truetype');
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Noto Sans';
+  src: url('./fonts/noto_sans_bold.ttf') format('truetype');
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Barlow Condensed';
+  src: url('./fonts/barlow_condensed_bold.ttf') format('truetype');
+  font-weight: 700;
+  font-display: swap;
+}
+
+:root {
+  /* palette §2 */
+  --parchment: #efebda;
+  --card: #fbfaf2;
+  --card-dim: #f6f3e6;
+  --sand: #e8e3ce;
+  --grid: #e3dec8;
+  --ledge: #d9d4be;
+  --ink: #2a2a22;
+  --ink-muted: #6b6a58;
+  --outline: #86826b;
+  --forest: #1f2a24;
+  --signal: #e4572e;
+  --signal-deep: #b83a16;
+  --signal-wash: #fbe3d9;
+  --trail: #2d7a46;
+  --waypoint: #2b6cb0;
+  --contour: #c09a68;
+  --vegetation: #d8e4c4;
+  --water: #bfdde6;
+  --easy-wash: #cfe8cf;
+  --easy-ink: #1f5a2a;
+  --moderate-wash: #fde6b8;
+  --moderate-ink: #7a4a00;
+  --hard-wash: #f6c9c0;
+  --hard-ink: #8a2410;
+  --error: #b3261e;
+
+  /* type §3 */
+  --font-text: 'Noto Sans', system-ui, sans-serif;
+  --font-num: 'Barlow Condensed', 'Noto Sans', sans-serif;
+
+  /* space §4 (4 · 8 · 12 · 16 · 24 · 32) */
+  --s-xs: 4px;
+  --s-s: 8px;
+  --s-m: 12px;
+  --s-l: 16px;
+  --s-xl: 24px;
+  --s-xxl: 32px;
+
+  /* radii §4 */
+  --r-badge: 8px;
+  --r-chip: 12px;
+  --r-card: 18px;
+  --r-panel: 22px;
+
+  /* ledge and lift §4 */
+  --ledge-shadow: 0 2px 0 var(--ledge);
+  --lift-chip: 0 4px 10px rgba(0, 0, 0, 0.25);
+  --lift-panel: 0 8px 24px rgba(30, 40, 20, 0.3);
+}

@@ -1,0 +1,160 @@
+.layout {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr) 300px;
+  gap: var(--s-l);
+  padding: var(--s-l);
+  min-height: 100%;
+}
+.empty {
+  padding: var(--s-xl);
+}
+.stops {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.stopBtn {
+  display: flex;
+  align-items: center;
+  gap: var(--s-s);
+  padding: var(--s-s);
+  border: 0;
+  border-radius: var(--r-chip);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+.stopBtn:hover {
+  background: var(--sand);
+}
+.stopOn {
+  background: var(--card);
+  box-shadow: var(--ledge-shadow);
+}
+.stopNo {
+  width: 22px;
+  color: var(--ink-muted);
+}
+.stopName {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 700;
+}
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-l);
+  min-width: 0;
+}
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--s-m) var(--s-l);
+  background: var(--forest);
+  color: var(--card);
+  border-radius: var(--r-card);
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--s-m);
+}
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-xs);
+  padding: var(--s-s);
+  background: var(--card);
+  border-radius: var(--r-card);
+  box-shadow: var(--ledge-shadow);
+}
+.thumb {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-chip);
+  background: var(--sand);
+  color: var(--ink-muted);
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+}
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.badgeTop,
+.badgeBottom {
+  position: absolute;
+  left: var(--s-xs);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-xs);
+}
+.badgeTop {
+  top: var(--s-xs);
+}
+.badgeBottom {
+  bottom: var(--s-xs);
+}
+.tileName {
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tileErr {
+  font-size: 13px;
+  color: var(--error);
+}
+.credit {
+  min-height: 32px;
+  font-size: 13px;
+  padding: var(--s-xs) var(--s-s);
+}
+.tileActions {
+  display: flex;
+  justify-content: space-between;
+}
+.link,
+.linkDanger {
+  border: 0;
+  background: none;
+  padding: 0;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--signal-deep);
+}
+.linkDanger {
+  color: var(--error);
+}
+.drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-xs);
+  padding: var(--s-xl);
+  border: 2px dashed var(--outline);
+  border-radius: var(--r-card);
+  text-align: center;
+  cursor: pointer;
+}
+.drop:hover {
+  background: var(--card-dim);
+}
+.side .list {
+  margin: var(--s-s) 0 0;
+  padding-left: var(--s-l);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-s);
+  font-size: 13.5px;
+}

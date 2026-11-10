@@ -1,0 +1,122 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-l);
+}
+.title {
+  font-size: 28px;
+  line-height: 36px;
+}
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s-m);
+}
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-s);
+  padding: var(--s-l);
+  background: var(--card);
+  border-radius: var(--r-card);
+  box-shadow: var(--ledge-shadow);
+}
+.card > button {
+  margin-top: auto;
+}
+.cardTitle {
+  font-size: 17px;
+  line-height: 24px;
+}
+.text {
+  margin: 0 0 var(--s-s);
+  color: var(--ink);
+}
+.text code {
+  font-size: 12.5px;
+  background: var(--card-dim);
+  padding: 1px var(--s-xs);
+  border-radius: 6px;
+}
+.progress {
+  padding: var(--s-m) var(--s-l);
+  background: var(--card);
+  border-radius: var(--r-card);
+  box-shadow: var(--ledge-shadow);
+}
+.bar {
+  margin-top: var(--s-s);
+  height: 6px;
+  border-radius: 3px;
+  background: var(--sand);
+  overflow: hidden;
+}
+.bar > div {
+  height: 100%;
+  background: var(--signal);
+}
+.preview {
+  max-width: 880px;
+  background: var(--card);
+  border-radius: var(--r-panel);
+  box-shadow: var(--ledge-shadow);
+  overflow: hidden;
+}
+.previewHead {
+  padding: var(--s-m) var(--s-l);
+  background: var(--forest);
+  color: var(--card);
+  font-weight: 700;
+}
+.previewBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-m);
+  padding: var(--s-l);
+}
+.previewBody p {
+  margin: 0;
+}
+.facts {
+  display: grid;
+  grid-template-columns: repeat(5, auto);
+  gap: var(--s-l);
+  margin: 0;
+}
+.facts dt {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+}
+.facts dd {
+  margin: 0;
+  font-size: 15px;
+}
+.facts dd:global(.num) {
+  font-size: 30px;
+  line-height: 36px;
+}
+.trips {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-xs);
+}
+.trip {
+  display: flex;
+  align-items: center;
+  gap: var(--s-m);
+  padding: var(--s-s) var(--s-m);
+  border-radius: var(--r-chip);
+  cursor: pointer;
+}
+.tripOn {
+  background: var(--sand);
+}
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--s-s);
+}

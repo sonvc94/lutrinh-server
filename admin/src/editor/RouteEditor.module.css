@@ -1,0 +1,92 @@
+.shell {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.loading {
+  padding: var(--s-xl);
+}
+.bar {
+  display: flex;
+  align-items: center;
+  gap: var(--s-l);
+  min-height: 60px;
+  padding: 0 var(--s-l);
+  background: var(--forest);
+  color: var(--card);
+}
+.back {
+  display: inline-flex;
+  color: var(--card);
+  padding: var(--s-xs);
+  border-radius: var(--r-chip);
+}
+.titleBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  max-width: 340px;
+}
+.title {
+  font-weight: 700;
+  font-size: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.badges {
+  display: flex;
+  gap: var(--s-xs);
+}
+.tabs {
+  display: flex;
+  gap: var(--s-xs);
+  margin: 0 auto;
+}
+.tab {
+  padding: var(--s-s) var(--s-m);
+  color: var(--card);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 14px;
+  border-bottom: 2px solid transparent;
+}
+.tabOn {
+  border-bottom-color: var(--signal);
+}
+.save {
+  display: flex;
+  align-items: center;
+  gap: var(--s-s);
+}
+.save button {
+  color: var(--card);
+}
+.save button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+}
+.saveText {
+  font-size: 13px;
+  opacity: 0.85;
+}
+.banner {
+  display: flex;
+  align-items: center;
+  gap: var(--s-m);
+  padding: var(--s-s) var(--s-l);
+  background: var(--hard-wash);
+  color: var(--hard-ink);
+  font-weight: 700;
+}
+.jobs {
+  padding: var(--s-xs) var(--s-l);
+  background: var(--moderate-wash);
+  color: var(--moderate-ink);
+  font-size: 13px;
+}
+.main {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}

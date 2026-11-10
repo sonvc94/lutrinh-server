@@ -1,0 +1,3558 @@
+{
+ "components": {
+  "schemas": {
+   "AuditOut": {
+    "additionalProperties": false,
+    "properties": {
+     "action": {
+      "title": "Action",
+      "type": "string"
+     },
+     "actor": {
+      "title": "Actor",
+      "type": "string"
+     },
+     "after": {
+      "anyOf": [
+       {
+        "additionalProperties": true,
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "After"
+     },
+     "at": {
+      "format": "date-time",
+      "title": "At",
+      "type": "string"
+     },
+     "before": {
+      "anyOf": [
+       {
+        "additionalProperties": true,
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Before"
+     },
+     "id": {
+      "title": "Id",
+      "type": "integer"
+     },
+     "routeId": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Routeid"
+     },
+     "target": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Target"
+     }
+    },
+    "required": [
+     "id",
+     "at",
+     "actor",
+     "action",
+     "routeId",
+     "target",
+     "before",
+     "after"
+    ],
+    "title": "AuditOut",
+    "type": "object"
+   },
+   "CodeCreate": {
+    "additionalProperties": false,
+    "properties": {
+     "expiresAt": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Expiresat"
+     },
+     "prefix": {
+      "anyOf": [
+       {
+        "maxLength": 2,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Prefix"
+     }
+    },
+    "title": "CodeCreate",
+    "type": "object"
+   },
+   "CodeOut": {
+    "additionalProperties": false,
+    "properties": {
+     "code": {
+      "title": "Code",
+      "type": "string"
+     },
+     "createdAt": {
+      "format": "date-time",
+      "title": "Createdat",
+      "type": "string"
+     },
+     "expiresAt": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Expiresat"
+     },
+     "live": {
+      "title": "Live",
+      "type": "boolean"
+     },
+     "revokeReason": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Revokereason"
+     },
+     "revokedAt": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Revokedat"
+     },
+     "routeId": {
+      "title": "Routeid",
+      "type": "string"
+     }
+    },
+    "required": [
+     "code",
+     "routeId",
+     "createdAt",
+     "expiresAt",
+     "revokedAt",
+     "revokeReason",
+     "live"
+    ],
+    "title": "CodeOut",
+    "type": "object"
+   },
+   "CodePatch": {
+    "additionalProperties": false,
+    "properties": {
+     "expiresAt": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Expiresat"
+     }
+    },
+    "required": [
+     "expiresAt"
+    ],
+    "title": "CodePatch",
+    "type": "object"
+   },
+   "Completed": {
+    "additionalProperties": false,
+    "properties": {
+     "jobId": {
+      "title": "Jobid",
+      "type": "integer"
+     },
+     "media": {
+      "$ref": "#/components/schemas/MediaOut"
+     }
+    },
+    "required": [
+     "media",
+     "jobId"
+    ],
+    "title": "Completed",
+    "type": "object"
+   },
+   "DraftBody": {
+    "additionalProperties": false,
+    "properties": {
+     "cover": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Cover"
+     },
+     "credits": {
+      "items": {
+       "type": "string"
+      },
+      "maxItems": 50,
+      "title": "Credits",
+      "type": "array"
+     },
+     "days": {
+      "default": 1,
+      "title": "Days",
+      "type": "integer"
+     },
+     "description": {
+      "default": "",
+      "maxLength": 4000,
+      "title": "Description",
+      "type": "string"
+     },
+     "legs": {
+      "items": {
+       "$ref": "#/components/schemas/LegIn"
+      },
+      "maxItems": 199,
+      "title": "Legs",
+      "type": "array"
+     },
+     "readyMade": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Readymade"
+     },
+     "stops": {
+      "items": {
+       "$ref": "#/components/schemas/StopIn"
+      },
+      "maxItems": 200,
+      "title": "Stops",
+      "type": "array"
+     },
+     "title": {
+      "default": "",
+      "maxLength": 200,
+      "title": "Title",
+      "type": "string"
+     }
+    },
+    "title": "DraftBody",
+    "type": "object"
+   },
+   "DraftOut": {
+    "additionalProperties": false,
+    "properties": {
+     "body": {
+      "additionalProperties": true,
+      "title": "Body",
+      "type": "object"
+     },
+     "etag": {
+      "title": "Etag",
+      "type": "string"
+     },
+     "queuedJobs": {
+      "items": {
+       "type": "integer"
+      },
+      "title": "Queuedjobs",
+      "type": "array"
+     },
+     "revision": {
+      "title": "Revision",
+      "type": "integer"
+     },
+     "routeId": {
+      "title": "Routeid",
+      "type": "string"
+     },
+     "updatedAt": {
+      "format": "date-time",
+      "title": "Updatedat",
+      "type": "string"
+     }
+    },
+    "required": [
+     "routeId",
+     "revision",
+     "etag",
+     "updatedAt",
+     "body"
+    ],
+    "title": "DraftOut",
+    "type": "object"
+   },
+   "HTTPValidationError": {
+    "properties": {
+     "detail": {
+      "items": {
+       "$ref": "#/components/schemas/ValidationError"
+      },
+      "title": "Detail",
+      "type": "array"
+     }
+    },
+    "title": "HTTPValidationError",
+    "type": "object"
+   },
+   "ImportApply": {
+    "additionalProperties": false,
+    "properties": {
+     "tripId": {
+      "anyOf": [
+       {
+        "maxLength": 64,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Tripid"
+     }
+    },
+    "title": "ImportApply",
+    "type": "object"
+   },
+   "ImportCreate": {
+    "additionalProperties": false,
+    "properties": {
+     "bytes": {
+      "exclusiveMinimum": 0.0,
+      "title": "Bytes",
+      "type": "integer"
+     },
+     "filename": {
+      "maxLength": 255,
+      "minLength": 1,
+      "title": "Filename",
+      "type": "string"
+     },
+     "kind": {
+      "enum": [
+       "gpx",
+       "backup"
+      ],
+      "title": "Kind",
+      "type": "string"
+     }
+    },
+    "required": [
+     "kind",
+     "filename",
+     "bytes"
+    ],
+    "title": "ImportCreate",
+    "type": "object"
+   },
+   "ImportOut": {
+    "additionalProperties": false,
+    "properties": {
+     "appliedAt": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Appliedat"
+     },
+     "createdAt": {
+      "format": "date-time",
+      "title": "Createdat",
+      "type": "string"
+     },
+     "error": {
+      "anyOf": [
+       {
+        "additionalProperties": true,
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Error"
+     },
+     "filename": {
+      "title": "Filename",
+      "type": "string"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "kind": {
+      "title": "Kind",
+      "type": "string"
+     },
+     "preview": {
+      "anyOf": [
+       {
+        "additionalProperties": true,
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Preview"
+     },
+     "routeId": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Routeid"
+     },
+     "status": {
+      "title": "Status",
+      "type": "string"
+     },
+     "upload": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/UploadState"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    },
+    "required": [
+     "id",
+     "kind",
+     "status",
+     "filename",
+     "preview",
+     "error",
+     "routeId",
+     "createdAt",
+     "appliedAt"
+    ],
+    "title": "ImportOut",
+    "type": "object"
+   },
+   "JobOut": {
+    "additionalProperties": false,
+    "properties": {
+     "createdAt": {
+      "format": "date-time",
+      "title": "Createdat",
+      "type": "string"
+     },
+     "error": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Error"
+     },
+     "finishedAt": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Finishedat"
+     },
+     "id": {
+      "title": "Id",
+      "type": "integer"
+     },
+     "kind": {
+      "title": "Kind",
+      "type": "string"
+     },
+     "progress": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Progress"
+     },
+     "result": {
+      "anyOf": [
+       {
+        "additionalProperties": true,
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Result"
+     },
+     "status": {
+      "title": "Status",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "kind",
+     "status",
+     "progress",
+     "result",
+     "error",
+     "createdAt",
+     "finishedAt"
+    ],
+    "title": "JobOut",
+    "type": "object"
+   },
+   "JobRef": {
+    "additionalProperties": false,
+    "properties": {
+     "jobId": {
+      "title": "Jobid",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "jobId"
+    ],
+    "title": "JobRef",
+    "type": "object"
+   },
+   "LegIn": {
+    "additionalProperties": false,
+    "properties": {
+     "distanceM": {
+      "title": "Distancem",
+      "type": "number"
+     },
+     "durationS": {
+      "title": "Durations",
+      "type": "number"
+     },
+     "path": {
+      "maxLength": 1000000,
+      "title": "Path",
+      "type": "string"
+     },
+     "profile": {
+      "title": "Profile",
+      "type": "string"
+     },
+     "source": {
+      "title": "Source",
+      "type": "string"
+     },
+     "status": {
+      "title": "Status",
+      "type": "string"
+     },
+     "to": {
+      "maxLength": 40,
+      "title": "To",
+      "type": "string"
+     },
+     "usedProfile": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Usedprofile"
+     }
+    },
+    "required": [
+     "to",
+     "profile",
+     "source",
+     "status",
+     "distanceM",
+     "durationS",
+     "path"
+    ],
+    "title": "LegIn",
+    "type": "object"
+   },
+   "LoginIn": {
+    "additionalProperties": false,
+    "properties": {
+     "code": {
+      "maxLength": 32,
+      "title": "Code",
+      "type": "string"
+     },
+     "password": {
+      "maxLength": 1024,
+      "title": "Password",
+      "type": "string"
+     }
+    },
+    "required": [
+     "password",
+     "code"
+    ],
+    "title": "LoginIn",
+    "type": "object"
+   },
+   "ManualLegIn": {
+    "additionalProperties": false,
+    "properties": {
+     "durationS": {
+      "anyOf": [
+       {
+        "minimum": 0.0,
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Durations"
+     },
+     "path": {
+      "maxLength": 1000000,
+      "title": "Path",
+      "type": "string"
+     }
+    },
+    "required": [
+     "path"
+    ],
+    "title": "ManualLegIn",
+    "type": "object"
+   },
+   "MediaCreate": {
+    "additionalProperties": false,
+    "properties": {
+     "bytes": {
+      "exclusiveMinimum": 0.0,
+      "title": "Bytes",
+      "type": "integer"
+     },
+     "contentType": {
+      "anyOf": [
+       {
+        "maxLength": 100,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Contenttype"
+     },
+     "filename": {
+      "maxLength": 255,
+      "minLength": 1,
+      "title": "Filename",
+      "type": "string"
+     },
+     "routeId": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Routeid"
+     }
+    },
+    "required": [
+     "filename",
+     "bytes"
+    ],
+    "title": "MediaCreate",
+    "type": "object"
+   },
+   "MediaOut": {
+    "additionalProperties": false,
+    "properties": {
+     "bytes": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Bytes"
+     },
+     "createdAt": {
+      "format": "date-time",
+      "title": "Createdat",
+      "type": "string"
+     },
+     "credit": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Credit"
+     },
+     "durationMs": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Durationms"
+     },
+     "error": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Error"
+     },
+     "height": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Height"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "originalName": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Originalname"
+     },
+     "routeId": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Routeid"
+     },
+     "sha256": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Sha256"
+     },
+     "status": {
+      "title": "Status",
+      "type": "string"
+     },
+     "type": {
+      "title": "Type",
+      "type": "string"
+     },
+     "upload": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/UploadState"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "width": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Width"
+     }
+    },
+    "required": [
+     "id",
+     "routeId",
+     "type",
+     "status",
+     "sha256",
+     "bytes",
+     "width",
+     "height",
+     "durationMs",
+     "credit",
+     "originalName",
+     "error",
+     "createdAt"
+    ],
+    "title": "MediaOut",
+    "type": "object"
+   },
+   "MediaPatch": {
+    "additionalProperties": false,
+    "properties": {
+     "credit": {
+      "anyOf": [
+       {
+        "maxLength": 200,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Credit"
+     }
+    },
+    "required": [
+     "credit"
+    ],
+    "title": "MediaPatch",
+    "type": "object"
+   },
+   "PreflightOut": {
+    "additionalProperties": false,
+    "properties": {
+     "blockers": {
+      "items": {
+       "$ref": "#/components/schemas/Problem"
+      },
+      "title": "Blockers",
+      "type": "array"
+     },
+     "canPublish": {
+      "title": "Canpublish",
+      "type": "boolean"
+     },
+     "mediaBytes": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Mediabytes"
+     },
+     "mediaFiles": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Mediafiles"
+     },
+     "nextVersion": {
+      "title": "Nextversion",
+      "type": "integer"
+     },
+     "warnings": {
+      "items": {
+       "$ref": "#/components/schemas/Problem"
+      },
+      "title": "Warnings",
+      "type": "array"
+     }
+    },
+    "required": [
+     "nextVersion",
+     "canPublish",
+     "blockers",
+     "warnings",
+     "mediaBytes",
+     "mediaFiles"
+    ],
+    "title": "PreflightOut",
+    "type": "object"
+   },
+   "Problem": {
+    "additionalProperties": false,
+    "properties": {
+     "code": {
+      "title": "Code",
+      "type": "string"
+     },
+     "message": {
+      "title": "Message",
+      "type": "string"
+     },
+     "path": {
+      "title": "Path",
+      "type": "string"
+     }
+    },
+    "required": [
+     "code",
+     "path",
+     "message"
+    ],
+    "title": "Problem",
+    "type": "object"
+   },
+   "PublishIn": {
+    "additionalProperties": false,
+    "properties": {
+     "codePrefix": {
+      "anyOf": [
+       {
+        "maxLength": 2,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Codeprefix"
+     },
+     "note": {
+      "anyOf": [
+       {
+        "maxLength": 1000,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Note"
+     }
+    },
+    "title": "PublishIn",
+    "type": "object"
+   },
+   "PublishOut": {
+    "additionalProperties": false,
+    "properties": {
+     "code": {
+      "$ref": "#/components/schemas/CodeOut"
+     },
+     "codeIssued": {
+      "title": "Codeissued",
+      "type": "boolean"
+     },
+     "version": {
+      "$ref": "#/components/schemas/VersionOut"
+     },
+     "warnings": {
+      "items": {
+       "$ref": "#/components/schemas/Problem"
+      },
+      "title": "Warnings",
+      "type": "array"
+     }
+    },
+    "required": [
+     "version",
+     "code",
+     "codeIssued",
+     "warnings"
+    ],
+    "title": "PublishOut",
+    "type": "object"
+   },
+   "RepublishIn": {
+    "additionalProperties": false,
+    "properties": {
+     "note": {
+      "anyOf": [
+       {
+        "maxLength": 1000,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Note"
+     }
+    },
+    "title": "RepublishIn",
+    "type": "object"
+   },
+   "RevokeIn": {
+    "additionalProperties": false,
+    "properties": {
+     "prefix": {
+      "anyOf": [
+       {
+        "maxLength": 2,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Prefix"
+     },
+     "reason": {
+      "anyOf": [
+       {
+        "maxLength": 500,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Reason"
+     },
+     "reissue": {
+      "default": false,
+      "title": "Reissue",
+      "type": "boolean"
+     }
+    },
+    "title": "RevokeIn",
+    "type": "object"
+   },
+   "RevokeOut": {
+    "additionalProperties": false,
+    "properties": {
+     "newCode": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/CodeOut"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "revoked": {
+      "$ref": "#/components/schemas/CodeOut"
+     }
+    },
+    "required": [
+     "revoked",
+     "newCode"
+    ],
+    "title": "RevokeOut",
+    "type": "object"
+   },
+   "RouteCreate": {
+    "additionalProperties": false,
+    "properties": {
+     "title": {
+      "default": "Lộ trình mới",
+      "maxLength": 60,
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+     }
+    },
+    "title": "RouteCreate",
+    "type": "object"
+   },
+   "RouteOut": {
+    "additionalProperties": false,
+    "properties": {
+     "code": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Code"
+     },
+     "createdAt": {
+      "format": "date-time",
+      "title": "Createdat",
+      "type": "string"
+     },
+     "deletedAt": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Deletedat"
+     },
+     "draftChanged": {
+      "title": "Draftchanged",
+      "type": "boolean"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "latestVersion": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Latestversion"
+     },
+     "publishedAt": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Publishedat"
+     },
+     "status": {
+      "enum": [
+       "draft",
+       "shared",
+       "unpublished",
+       "trash"
+      ],
+      "title": "Status",
+      "type": "string"
+     },
+     "stops": {
+      "title": "Stops",
+      "type": "integer"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     },
+     "updatedAt": {
+      "format": "date-time",
+      "title": "Updatedat",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "title",
+     "status",
+     "latestVersion",
+     "publishedAt",
+     "draftChanged",
+     "code",
+     "stops",
+     "createdAt",
+     "updatedAt",
+     "deletedAt"
+    ],
+    "title": "RouteOut",
+    "type": "object"
+   },
+   "RouteRef": {
+    "additionalProperties": false,
+    "properties": {
+     "routeId": {
+      "title": "Routeid",
+      "type": "string"
+     }
+    },
+    "required": [
+     "routeId"
+    ],
+    "title": "RouteRef",
+    "type": "object"
+   },
+   "SessionOut": {
+    "additionalProperties": false,
+    "properties": {
+     "csrfToken": {
+      "title": "Csrftoken",
+      "type": "string"
+     },
+     "expiresAt": {
+      "format": "date-time",
+      "title": "Expiresat",
+      "type": "string"
+     },
+     "idleExpiresAt": {
+      "format": "date-time",
+      "title": "Idleexpiresat",
+      "type": "string"
+     }
+    },
+    "required": [
+     "csrfToken",
+     "expiresAt",
+     "idleExpiresAt"
+    ],
+    "title": "SessionOut",
+    "type": "object"
+   },
+   "StatRow": {
+    "additionalProperties": false,
+    "properties": {
+     "count": {
+      "title": "Count",
+      "type": "integer"
+     },
+     "day": {
+      "title": "Day",
+      "type": "string"
+     },
+     "kind": {
+      "title": "Kind",
+      "type": "string"
+     },
+     "routeId": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Routeid"
+     }
+    },
+    "required": [
+     "day",
+     "routeId",
+     "kind",
+     "count"
+    ],
+    "title": "StatRow",
+    "type": "object"
+   },
+   "StopIn": {
+    "additionalProperties": false,
+    "properties": {
+     "arrival": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Arrival"
+     },
+     "day": {
+      "title": "Day",
+      "type": "integer"
+     },
+     "id": {
+      "maxLength": 40,
+      "title": "Id",
+      "type": "string"
+     },
+     "lat": {
+      "title": "Lat",
+      "type": "number"
+     },
+     "lng": {
+      "title": "Lng",
+      "type": "number"
+     },
+     "media": {
+      "items": {
+       "type": "string"
+      },
+      "maxItems": 30,
+      "title": "Media",
+      "type": "array"
+     },
+     "note": {
+      "default": "",
+      "maxLength": 4000,
+      "title": "Note",
+      "type": "string"
+     },
+     "time": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Time"
+     },
+     "title": {
+      "default": "",
+      "maxLength": 200,
+      "title": "Title",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "day",
+     "lat",
+     "lng"
+    ],
+    "title": "StopIn",
+    "type": "object"
+   },
+   "UpdateLink": {
+    "properties": {
+     "code": {
+      "maxLength": 32,
+      "title": "Code",
+      "type": "string"
+     },
+     "routeId": {
+      "maxLength": 40,
+      "title": "Routeid",
+      "type": "string"
+     },
+     "version": {
+      "minimum": 1.0,
+      "title": "Version",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "code",
+     "routeId",
+     "version"
+    ],
+    "title": "UpdateLink",
+    "type": "object"
+   },
+   "UploadState": {
+    "additionalProperties": false,
+    "properties": {
+     "bytes": {
+      "title": "Bytes",
+      "type": "integer"
+     },
+     "chunkBytes": {
+      "title": "Chunkbytes",
+      "type": "integer"
+     },
+     "chunks": {
+      "title": "Chunks",
+      "type": "integer"
+     },
+     "completedAt": {
+      "anyOf": [
+       {
+        "format": "date-time",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Completedat"
+     },
+     "received": {
+      "items": {
+       "type": "integer"
+      },
+      "title": "Received",
+      "type": "array"
+     },
+     "sha256": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Sha256"
+     }
+    },
+    "required": [
+     "bytes",
+     "chunkBytes",
+     "chunks",
+     "received",
+     "sha256",
+     "completedAt"
+    ],
+    "title": "UploadState",
+    "type": "object"
+   },
+   "ValidationError": {
+    "properties": {
+     "ctx": {
+      "title": "Context",
+      "type": "object"
+     },
+     "input": {
+      "title": "Input"
+     },
+     "loc": {
+      "items": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "integer"
+        }
+       ]
+      },
+      "title": "Location",
+      "type": "array"
+     },
+     "msg": {
+      "title": "Message",
+      "type": "string"
+     },
+     "type": {
+      "title": "Error Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "loc",
+     "msg",
+     "type"
+    ],
+    "title": "ValidationError",
+    "type": "object"
+   },
+   "VersionOut": {
+    "additionalProperties": false,
+    "properties": {
+     "bytes": {
+      "title": "Bytes",
+      "type": "integer"
+     },
+     "mediaBytes": {
+      "title": "Mediabytes",
+      "type": "integer"
+     },
+     "mediaFiles": {
+      "title": "Mediafiles",
+      "type": "integer"
+     },
+     "note": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Note"
+     },
+     "publishedAt": {
+      "format": "date-time",
+      "title": "Publishedat",
+      "type": "string"
+     },
+     "sha256": {
+      "title": "Sha256",
+      "type": "string"
+     },
+     "sourceVersion": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Sourceversion"
+     },
+     "version": {
+      "title": "Version",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "version",
+     "sha256",
+     "publishedAt",
+     "note",
+     "bytes",
+     "mediaBytes",
+     "mediaFiles",
+     "sourceVersion"
+    ],
+    "title": "VersionOut",
+    "type": "object"
+   }
+  }
+ },
+ "info": {
+  "title": "Lữ Trình route server",
+  "version": "1"
+ },
+ "openapi": "3.1.0",
+ "paths": {
+  "/admin/api/v1/audit": {
+   "get": {
+    "operationId": "audit_log_admin_api_v1_audit_get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "routeId",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Routeid"
+      }
+     },
+     {
+      "in": "query",
+      "name": "beforeId",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "integer"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Beforeid"
+      }
+     },
+     {
+      "in": "query",
+      "name": "limit",
+      "required": false,
+      "schema": {
+       "default": 100,
+       "maximum": 500,
+       "minimum": 1,
+       "title": "Limit",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/AuditOut"
+         },
+         "title": "Response Audit Log Admin Api V1 Audit Get",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Audit Log",
+    "tags": [
+     "activity"
+    ]
+   }
+  },
+  "/admin/api/v1/codes/{code}": {
+   "patch": {
+    "operationId": "patch_code_admin_api_v1_codes__code__patch",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "code",
+      "required": true,
+      "schema": {
+       "title": "Code",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CodePatch"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CodeOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Patch Code",
+    "tags": [
+     "routes"
+    ]
+   }
+  },
+  "/admin/api/v1/codes/{code}/revoke": {
+   "post": {
+    "operationId": "revoke_code_admin_api_v1_codes__code__revoke_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "code",
+      "required": true,
+      "schema": {
+       "title": "Code",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/RevokeIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RevokeOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Revoke Code",
+    "tags": [
+     "routes"
+    ]
+   }
+  },
+  "/admin/api/v1/imports": {
+   "post": {
+    "operationId": "create_import_admin_api_v1_imports_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ImportCreate"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ImportOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Create Import",
+    "tags": [
+     "files"
+    ]
+   }
+  },
+  "/admin/api/v1/imports/{import_id}": {
+   "get": {
+    "operationId": "get_import_admin_api_v1_imports__import_id__get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "import_id",
+      "required": true,
+      "schema": {
+       "title": "Import Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ImportOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Get Import",
+    "tags": [
+     "files"
+    ]
+   }
+  },
+  "/admin/api/v1/imports/{import_id}/apply": {
+   "post": {
+    "operationId": "apply_import_admin_api_v1_imports__import_id__apply_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "import_id",
+      "required": true,
+      "schema": {
+       "title": "Import Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ImportApply"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RouteRef"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Apply Import",
+    "tags": [
+     "files"
+    ]
+   }
+  },
+  "/admin/api/v1/imports/{import_id}/chunks/{n}": {
+   "put": {
+    "operationId": "put_import_chunk_admin_api_v1_imports__import_id__chunks__n__put",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "import_id",
+      "required": true,
+      "schema": {
+       "title": "Import Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "n",
+      "required": true,
+      "schema": {
+       "title": "N",
+       "type": "integer"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/octet-stream": {
+       "schema": {
+        "format": "binary",
+        "type": "string"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "204": {
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Put Import Chunk",
+    "tags": [
+     "files"
+    ]
+   }
+  },
+  "/admin/api/v1/imports/{import_id}/complete": {
+   "post": {
+    "operationId": "complete_import_admin_api_v1_imports__import_id__complete_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "import_id",
+      "required": true,
+      "schema": {
+       "title": "Import Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ImportOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Complete Import",
+    "tags": [
+     "files"
+    ]
+   }
+  },
+  "/admin/api/v1/jobs/{job_id}": {
+   "get": {
+    "operationId": "get_job_admin_api_v1_jobs__job_id__get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "job_id",
+      "required": true,
+      "schema": {
+       "title": "Job Id",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/JobOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Get Job",
+    "tags": [
+     "routes"
+    ]
+   }
+  },
+  "/admin/api/v1/media": {
+   "get": {
+    "operationId": "list_media_admin_api_v1_media_get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "routeId",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Routeid"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/MediaOut"
+         },
+         "title": "Response List Media Admin Api V1 Media Get",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "List Media",
+    "tags": [
+     "files"
+    ]
+   },
+   "post": {
+    "operationId": "create_media_admin_api_v1_media_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/MediaCreate"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/MediaOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Create Media",
+    "tags": [
+     "files"
+    ]
+   }
+  },
+  "/admin/api/v1/media/{media_id}": {
+   "delete": {
+    "operationId": "delete_media_admin_api_v1_media__media_id__delete",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "media_id",
+      "required": true,
+      "schema": {
+       "title": "Media Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Delete Media",
+    "tags": [
+     "files"
+    ]
+   },
+   "get": {
+    "operationId": "get_media_admin_api_v1_media__media_id__get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "media_id",
+      "required": true,
+      "schema": {
+       "title": "Media Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/MediaOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Get Media",
+    "tags": [
+     "files"
+    ]
+   },
+   "patch": {
+    "operationId": "patch_media_admin_api_v1_media__media_id__patch",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "media_id",
+      "required": true,
+      "schema": {
+       "title": "Media Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/MediaPatch"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/MediaOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Patch Media",
+    "tags": [
+     "files"
+    ]
+   }
+  },
+  "/admin/api/v1/media/{media_id}/chunks/{n}": {
+   "put": {
+    "operationId": "put_media_chunk_admin_api_v1_media__media_id__chunks__n__put",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "media_id",
+      "required": true,
+      "schema": {
+       "title": "Media Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "n",
+      "required": true,
+      "schema": {
+       "title": "N",
+       "type": "integer"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/octet-stream": {
+       "schema": {
+        "format": "binary",
+        "type": "string"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "204": {
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Put Media Chunk",
+    "tags": [
+     "files"
+    ]
+   }
+  },
+  "/admin/api/v1/media/{media_id}/complete": {
+   "post": {
+    "operationId": "complete_media_admin_api_v1_media__media_id__complete_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "media_id",
+      "required": true,
+      "schema": {
+       "title": "Media Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Completed"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Complete Media",
+    "tags": [
+     "files"
+    ]
+   }
+  },
+  "/admin/api/v1/routes": {
+   "get": {
+    "operationId": "list_routes_admin_api_v1_routes_get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "status",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Status"
+      }
+     },
+     {
+      "in": "query",
+      "name": "q",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "maxLength": 100,
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Q"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/RouteOut"
+         },
+         "title": "Response List Routes Admin Api V1 Routes Get",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "List Routes",
+    "tags": [
+     "routes"
+    ]
+   },
+   "post": {
+    "operationId": "create_route_admin_api_v1_routes_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/RouteCreate"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RouteOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Create Route",
+    "tags": [
+     "routes"
+    ]
+   }
+  },
+  "/admin/api/v1/routes/{route_id}": {
+   "delete": {
+    "operationId": "delete_route_admin_api_v1_routes__route_id__delete",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "route_id",
+      "required": true,
+      "schema": {
+       "title": "Route Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "query",
+      "name": "purge",
+      "required": false,
+      "schema": {
+       "default": false,
+       "title": "Purge",
+       "type": "boolean"
+      }
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Delete Route",
+    "tags": [
+     "routes"
+    ]
+   },
+   "get": {
+    "operationId": "get_route_admin_api_v1_routes__route_id__get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "route_id",
+      "required": true,
+      "schema": {
+       "title": "Route Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RouteOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Get Route",
+    "tags": [
+     "routes"
+    ]
+   }
+  },
+  "/admin/api/v1/routes/{route_id}/codes": {
+   "get": {
+    "operationId": "list_codes_admin_api_v1_routes__route_id__codes_get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "route_id",
+      "required": true,
+      "schema": {
+       "title": "Route Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/CodeOut"
+         },
+         "title": "Response List Codes Admin Api V1 Routes  Route Id  Codes Get",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "List Codes",
+    "tags": [
+     "routes"
+    ]
+   },
+   "post": {
+    "operationId": "create_code_admin_api_v1_routes__route_id__codes_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "route_id",
+      "required": true,
+      "schema": {
+       "title": "Route Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CodeCreate"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CodeOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Create Code",
+    "tags": [
+     "routes"
+    ]
+   }
+  },
+  "/admin/api/v1/routes/{route_id}/draft": {
+   "get": {
+    "operationId": "get_draft_admin_api_v1_routes__route_id__draft_get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "route_id",
+      "required": true,
+      "schema": {
+       "title": "Route Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DraftOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Get Draft",
+    "tags": [
+     "routes"
+    ]
+   },
+   "put": {
+    "operationId": "put_draft_admin_api_v1_routes__route_id__draft_put",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "route_id",
+      "required": true,
+      "schema": {
+       "title": "Route Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "header",
+      "name": "If-Match",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "If-Match"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/DraftBody"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DraftOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Put Draft",
+    "tags": [
+     "routes"
+    ]
+   }
+  },
+  "/admin/api/v1/routes/{route_id}/legs/{to_stop}": {
+   "put": {
+    "operationId": "put_manual_leg_admin_api_v1_routes__route_id__legs__to_stop__put",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "route_id",
+      "required": true,
+      "schema": {
+       "title": "Route Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "to_stop",
+      "required": true,
+      "schema": {
+       "title": "To Stop",
+       "type": "string"
+      }
+     },
+     {
+      "in": "header",
+      "name": "If-Match",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "If-Match"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ManualLegIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DraftOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Put Manual Leg",
+    "tags": [
+     "routes"
+    ]
+   }
+  },
+  "/admin/api/v1/routes/{route_id}/legs/{to_stop}/compute": {
+   "post": {
+    "operationId": "compute_leg_admin_api_v1_routes__route_id__legs__to_stop__compute_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "route_id",
+      "required": true,
+      "schema": {
+       "title": "Route Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "to_stop",
+      "required": true,
+      "schema": {
+       "title": "To Stop",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "202": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/JobRef"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Compute Leg",
+    "tags": [
+     "routes"
+    ]
+   }
+  },
+  "/admin/api/v1/routes/{route_id}/publish": {
+   "get": {
+    "operationId": "preflight_admin_api_v1_routes__route_id__publish_get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "route_id",
+      "required": true,
+      "schema": {
+       "title": "Route Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PreflightOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Preflight",
+    "tags": [
+     "routes"
+    ]
+   },
+   "post": {
+    "operationId": "publish_admin_api_v1_routes__route_id__publish_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "route_id",
+      "required": true,
+      "schema": {
+       "title": "Route Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/PublishIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PublishOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Publish",
+    "tags": [
+     "routes"
+    ]
+   }
+  },
+  "/admin/api/v1/routes/{route_id}/restore": {
+   "post": {
+    "operationId": "restore_route_admin_api_v1_routes__route_id__restore_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "route_id",
+      "required": true,
+      "schema": {
+       "title": "Route Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RouteOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Restore Route",
+    "tags": [
+     "routes"
+    ]
+   }
+  },
+  "/admin/api/v1/routes/{route_id}/unpublish": {
+   "post": {
+    "operationId": "unpublish_admin_api_v1_routes__route_id__unpublish_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "route_id",
+      "required": true,
+      "schema": {
+       "title": "Route Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RouteOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Unpublish",
+    "tags": [
+     "routes"
+    ]
+   }
+  },
+  "/admin/api/v1/routes/{route_id}/versions": {
+   "get": {
+    "operationId": "list_versions_admin_api_v1_routes__route_id__versions_get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "route_id",
+      "required": true,
+      "schema": {
+       "title": "Route Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/VersionOut"
+         },
+         "title": "Response List Versions Admin Api V1 Routes  Route Id  Versions Get",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "List Versions",
+    "tags": [
+     "routes"
+    ]
+   }
+  },
+  "/admin/api/v1/routes/{route_id}/versions/{version}/republish": {
+   "post": {
+    "operationId": "republish_admin_api_v1_routes__route_id__versions__version__republish_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "route_id",
+      "required": true,
+      "schema": {
+       "title": "Route Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "version",
+      "required": true,
+      "schema": {
+       "title": "Version",
+       "type": "integer"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/RepublishIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PublishOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Republish",
+    "tags": [
+     "routes"
+    ]
+   }
+  },
+  "/admin/api/v1/session": {
+   "delete": {
+    "operationId": "logout_admin_api_v1_session_delete",
+    "responses": {
+     "204": {
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Log out",
+    "tags": [
+     "session"
+    ]
+   },
+   "get": {
+    "operationId": "read_admin_api_v1_session_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SessionOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Current session",
+    "tags": [
+     "session"
+    ]
+   },
+   "post": {
+    "operationId": "login_admin_api_v1_session_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/LoginIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SessionOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Log in",
+    "tags": [
+     "session"
+    ]
+   }
+  },
+  "/admin/api/v1/stats": {
+   "get": {
+    "operationId": "stats_admin_api_v1_stats_get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "days",
+      "required": false,
+      "schema": {
+       "default": 30,
+       "maximum": 400,
+       "minimum": 1,
+       "title": "Days",
+       "type": "integer"
+      }
+     },
+     {
+      "in": "query",
+      "name": "routeId",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Routeid"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/StatRow"
+         },
+         "title": "Response Stats Admin Api V1 Stats Get",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Stats",
+    "tags": [
+     "activity"
+    ]
+   }
+  },
+  "/api/v1/codes/{code}": {
+   "get": {
+    "operationId": "lookup_code_api_v1_codes__code__get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "code",
+      "required": true,
+      "schema": {
+       "title": "Code",
+       "type": "string"
+      }
+     },
+     {
+      "in": "header",
+      "name": "accept",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Accept"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Lookup Code Api V1 Codes  Code  Get",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Lookup Code",
+    "tags": [
+     "public"
+    ]
+   }
+  },
+  "/api/v1/dl/{token}/media/{sha256}": {
+   "get": {
+    "operationId": "download_media_api_v1_dl__token__media__sha256__get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "token",
+      "required": true,
+      "schema": {
+       "title": "Token",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "sha256",
+      "required": true,
+      "schema": {
+       "title": "Sha256",
+       "type": "string"
+      }
+     },
+     {
+      "in": "query",
+      "name": "w",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "integer"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "W"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Download Media",
+    "tags": [
+     "public"
+    ]
+   }
+  },
+  "/api/v1/dl/{token}/route": {
+   "get": {
+    "operationId": "download_route_api_v1_dl__token__route_get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "token",
+      "required": true,
+      "schema": {
+       "title": "Token",
+       "type": "string"
+      }
+     },
+     {
+      "in": "header",
+      "name": "accept",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Accept"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Download Route",
+    "tags": [
+     "public"
+    ]
+   }
+  },
+  "/api/v1/meta": {
+   "get": {
+    "operationId": "meta_api_v1_meta_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Meta Api V1 Meta Get",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Meta",
+    "tags": [
+     "public"
+    ]
+   }
+  },
+  "/api/v1/updates": {
+   "post": {
+    "operationId": "updates_api_v1_updates_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "items": {
+         "$ref": "#/components/schemas/UpdateLink"
+        },
+        "title": "Links",
+        "type": "array"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Updates",
+    "tags": [
+     "public"
+    ]
+   }
+  }
+ }
+}
