@@ -2,13 +2,15 @@
 
 The file format is the app's docs/02 "Backup file" (R26): ``manifest.json`` (format
 ``lutrinh-backup``, formatVersion 1, ``schemaVersion`` = Room version), ``lutrinh.db`` (SQLite)
-and ``photos/<file_name>``. Schemas 7–10 are read; older ones are refused with a reason.
+and ``photos/<file_name>``. Schemas 7–11 are read; older ones are refused with a reason.
 
 Mapping (page 02 "Ánh xạ", read backwards; page 04 E):
 
 * published steps only (``is_draft = 0``, R20), in R2 order (``arrived_at``, ``created_at``);
 * day = local date of ``arrived_at`` − trip ``start_date`` + 1, time = its ``HH:mm``;
 * ``transport_mode`` → ``arrival`` (unknown codes → null, R12);
+* ``arrival_note`` (schema 11, absent before) → ``arrivalNote``: trimmed, cut to 1000, absent
+  when empty/NULL and dropped on the first stop (as ``arrival``);
 * photos/videos by ``position`` (files re-processed by the media job, R11);
 * ``leg_routes`` rows with status ``ok`` whose profile matches the leg and whose end points
   still match the two published steps (within 1e-4°, as the app) become legs; other road legs
@@ -32,7 +34,7 @@ from lutrinh.core import ids, polyline, rules
 
 FORMAT = "lutrinh-backup"
 MIN_SCHEMA = 7
-MAX_SCHEMA = 10
+MAX_SCHEMA = 11
 MAX_DAYS = 30
 MAX_STOPS = 200
 MAX_MEDIA_PER_STOP = 30
@@ -253,19 +255,22 @@ def _trip_draft(conn: sqlite3.Connection, trip_id: str) -> TripDraft:
             by_photo_id[p["id"]] = item
             stop_media.append(item.media_id)
         stop_id = ids.new_stop_id()
-        stops.append(
-            {
-                "id": stop_id,
-                "day": day,
-                "time": arrived.strftime("%H:%M"),
-                "title": (step["title"] or "").strip()[:80].strip() or f"Điểm dừng {i + 1}",
-                "note": (step["note"] or "").strip()[:2000].strip(),
-                "lat": round(float(step["latitude"]), 6),
-                "lng": round(float(step["longitude"]), 6),
-                "arrival": _arrival(step["transport_mode"]) if i > 0 else None,
-                "media": stop_media,
-            }
-        )
+        stop: dict[str, Any] = {
+            "id": stop_id,
+            "day": day,
+            "time": arrived.strftime("%H:%M"),
+            "title": (step["title"] or "").strip()[:80].strip() or f"Điểm dừng {i + 1}",
+            "note": (step["note"] or "").strip()[:2000].strip(),
+            "lat": round(float(step["latitude"]), 6),
+            "lng": round(float(step["longitude"]), 6),
+            "arrival": _arrival(step["transport_mode"]) if i > 0 else None,
+            "media": stop_media,
+        }
+        note = step["arrival_note"] if "arrival_note" in list(step.keys()) else None
+        note = (note or "").strip()[:1000].strip() if isinstance(note, str) else ""
+        if note and i > 0:
+            stop["arrivalNote"] = note
+        stops.append(stop)
         if i == 0 or rules.road_profile(_arrival(step["transport_mode"])) is None:
             continue
         leg = _leg(legs_by_step.get(step["id"]), steps[i - 1], step)

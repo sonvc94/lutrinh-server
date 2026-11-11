@@ -213,8 +213,9 @@ def test_media_chunked_upload_queues_processing(admin: Admin, client: TestClient
     assert client.post(f"{PREFIX}/media", json=big).status_code == 413
 
 
-def _backup_zip(tmp: Path) -> bytes:
+def _backup_zip(tmp: Path, arrival_notes: dict[str, str | None] | None = None) -> bytes:
     db = tmp / "lutrinh.db"
+    db.unlink(missing_ok=True)
     conn = sqlite3.connect(db)
     conn.executescript(
         """
@@ -239,11 +240,16 @@ def _backup_zip(tmp: Path) -> bytes:
             ('p3', 'c', 'gone.jpg', 'photo', NULL, 0, 3);
         """
     )
+    if arrival_notes is not None:
+        conn.execute("ALTER TABLE steps ADD COLUMN arrival_note TEXT")
+        for step_id, note in arrival_notes.items():
+            conn.execute("UPDATE steps SET arrival_note = ? WHERE id = ?", (note, step_id))
     conn.commit()
     conn.close()
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w") as zf:
-        manifest = {"format": "lutrinh-backup", "formatVersion": 1, "schemaVersion": 10}
+        schema = 10 if arrival_notes is None else 11
+        manifest = {"format": "lutrinh-backup", "formatVersion": 1, "schemaVersion": schema}
         zf.writestr("manifest.json", json.dumps(manifest))
         zf.write(db, "lutrinh.db")
         zf.writestr("photos/p1.jpg", b"jpeg bytes")
@@ -275,6 +281,32 @@ def test_backup_import_makes_a_route_with_media_jobs(
     assert len(_jobs(admin, "media.image")) == 1 and len(_jobs(admin, "media.video")) == 1
     stop_b = body["stops"][1]["id"]
     assert _jobs(admin, "legs.compute") == [{"routeId": rid, "toStop": stop_b}]
+
+
+def test_backup_import_carries_arrival_notes(client: TestClient, tmp_path: Path) -> None:
+    notes = {"a": "bỏ qua", "b": "  Dốc khó đi  ", "c": "   "}
+    imp = import_file(client, "backup", "v11.zip", _backup_zip(tmp_path, notes))
+    assert imp["status"] == "ready", imp
+    r = client.post(f"{PREFIX}/imports/{imp['id']}/apply", json={"tripId": "t1"})
+    assert r.status_code == 201, r.text
+    body = client.get(f"{PREFIX}/routes/{r.json()['routeId']}/draft").json()["body"]
+    first, second, third = body["stops"]
+    assert "arrivalNote" not in first and "arrivalNote" not in third
+    assert second["arrivalNote"] == "Dốc khó đi"
+    long = _backup_zip(tmp_path, {"b": "x" * 1500})
+    imp = import_file(client, "backup", "long.zip", long)
+    r = client.post(f"{PREFIX}/imports/{imp['id']}/apply", json={"tripId": "t1"})
+    body = client.get(f"{PREFIX}/routes/{r.json()['routeId']}/draft").json()["body"]
+    assert body["stops"][1]["arrivalNote"] == "x" * 1000
+
+
+def test_backup_without_arrival_note_column_has_no_notes(
+    client: TestClient, tmp_path: Path
+) -> None:
+    imp = import_file(client, "backup", "v10.zip", _backup_zip(tmp_path))
+    r = client.post(f"{PREFIX}/imports/{imp['id']}/apply", json={"tripId": "t1"})
+    body = client.get(f"{PREFIX}/routes/{r.json()['routeId']}/draft").json()["body"]
+    assert all("arrivalNote" not in s for s in body["stops"])
 
 
 def test_import_failure_is_reported(client: TestClient) -> None:
