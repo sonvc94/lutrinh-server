@@ -6,6 +6,8 @@ Blockers (publishing is refused; page 02 "Kiểm tra giống app", page 03 "Kíc
   arrival time, R2, so the package order must be chronological);
 * ``time_order``: within one day, a stop's ``time`` is earlier than an earlier stop's time
   (stops without a time are skipped; equal times are allowed, R2 then keeps file order);
+* ``arrival_note_first_stop``: the first stop has an ``arrivalNote`` (there is no travel into it;
+  happens when a stop with a note is moved to the top);
 * ``route_json_too_large``: ``route.json`` > 2 MB;
 * ``package_too_large``: ``route.json`` + media > 300 MB.
 
@@ -47,6 +49,8 @@ def road_profile(arrival: str | None) -> str | None:
 def check_blockers(document: Mapping[str, Any], route_json_bytes: int) -> list[Problem]:
     """Rules on a schema-valid ``route.json`` document that refuse publishing."""
     out: list[Problem] = []
+    if document["stops"] and "arrivalNote" in document["stops"][0]:
+        out.append(Problem("arrival_note_first_stop", "/stops/0/arrivalNote", "first stop"))
     prev_day = 0
     last_time: str | None = None
     for i, stop in enumerate(document["stops"]):

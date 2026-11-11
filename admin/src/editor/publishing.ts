@@ -42,6 +42,7 @@ export function useCodes(routeId: string) {
 export const PROBLEM_TEXT: Record<string, string> = {
   day_order: 'Thứ tự ngày của các điểm bị lùi.',
   time_order: 'Giờ trong một ngày bị lùi.',
+  arrival_note_first_stop: 'Điểm xuất phát có ghi chú chặng (không có chặng đến).',
   route_json_too_large: 'route.json quá lớn.',
   package_too_large: 'Gói tải về quá lớn.',
   media_not_ready: 'Còn ảnh/video chưa xử lý xong.',

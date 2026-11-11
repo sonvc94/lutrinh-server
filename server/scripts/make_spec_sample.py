@@ -96,6 +96,9 @@ STOPS = [
     ("s9", 4, "14:00", "Về TP Hà Giang", "Trả xe.", 22.8233, 104.9836, "car", 0, None),
 ]
 
+# stop id → arrivalNote (note on the travel into that stop; never on the first stop)
+ARRIVAL_NOTES = {"s5": "Đường dốc khó đi. Gửi xe phía đối diện, 30.000 ₫."}
+
 
 def _sha(label: str) -> str:
     return hashlib.sha256(f"lutrinh-sample:{label}".encode()).hexdigest()
@@ -161,19 +164,20 @@ def main() -> None:
                 credit="Video: Lữ Trình",
             )
             ids.append(mid)
-        stops.append(
-            {
-                "id": sid,
-                "day": day,
-                "time": time,
-                "title": title,
-                "note": note,
-                "lat": lat,
-                "lng": lng,
-                "arrival": arrival,
-                "media": ids,
-            }
-        )
+        stop = {
+            "id": sid,
+            "day": day,
+            "time": time,
+            "title": title,
+            "note": note,
+            "lat": lat,
+            "lng": lng,
+            "arrival": arrival,
+            "media": ids,
+        }
+        if sid in ARRIVAL_NOTES:
+            stop["arrivalNote"] = ARRIVAL_NOTES[sid]
+        stops.append(stop)
 
     legs = []
     for i in range(1, len(stops)):

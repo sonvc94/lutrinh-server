@@ -7,6 +7,7 @@ import {
   removeStop,
   reorder,
   totals,
+  updateStop,
   type DraftBody,
   type Stop,
 } from '../../src/draft/model'
@@ -60,6 +61,33 @@ describe('normalise', () => {
     expect(b.days).toBe(1)
     expect(b.stops[0]).toMatchObject({ id: 'a', day: 1, time: null, arrival: null, media: [] })
     expect(b.legs).toEqual([])
+  })
+  it('keeps an arrivalNote and leaves it absent when empty', () => {
+    const b = normalise({
+      stops: [
+        { id: 'a', arrivalNote: '' },
+        { id: 'b', arrivalNote: 'Đường dốc khó đi' },
+        { id: 'c', arrivalNote: 7 },
+      ],
+    })
+    expect(b.stops.map((s) => 'arrivalNote' in s)).toEqual([false, true, false])
+    expect(b.stops[1]?.arrivalNote).toBe('Đường dốc khó đi')
+  })
+})
+
+describe('updateStop arrivalNote', () => {
+  it('sets the note and drops the key when it is cleared', () => {
+    const b = body([stop('a', 1), stop('b', 1)])
+    const withNote = updateStop(b, 'b', { arrivalNote: 'Gửi xe phía đối diện, 30k' })
+    expect(withNote.stops[1]?.arrivalNote).toBe('Gửi xe phía đối diện, 30k')
+    const cleared = updateStop(withNote, 'b', { arrivalNote: undefined })
+    expect('arrivalNote' in (cleared.stops[1] as Stop)).toBe(false)
+    expect(JSON.stringify(cleared)).toBe(JSON.stringify(b))
+  })
+  it('keeps the note on the stop when stops are reordered', () => {
+    const b = body([stop('a', 1), stop('b', 1, { arrivalNote: 'dốc' }), stop('c', 1)])
+    const r = reorder(b, 'b', 'c')
+    expect(r.stops.map((s) => s.arrivalNote ?? null)).toEqual([null, null, 'dốc'])
   })
 })
 
@@ -140,6 +168,12 @@ describe('localProblems', () => {
     expect(p).toContain('Điểm 2 chưa có tên.')
     expect(p).toContain('Điểm 2: ngày 1 sau ngày 2.')
     expect(p).toContain('Điểm 4: 08:00 sớm hơn 10:00.')
+  })
+  it('reports an arrivalNote on the first stop', () => {
+    const b = body([stop('a', 1, { arrivalNote: 'dốc' }), stop('b', 1)])
+    expect(localProblems(b)).toEqual([
+      'Điểm xuất phát không có chặng đến: hãy xóa ghi chú chặng của điểm 1.',
+    ])
   })
   it('is empty for a good route', () => {
     expect(localProblems(body([stop('a', 1), stop('b', 1), stop('c', 2)]))).toEqual([])

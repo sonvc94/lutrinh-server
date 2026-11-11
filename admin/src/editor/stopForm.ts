@@ -18,6 +18,7 @@ export const stopSchema = z.object({
     .max(LIMITS.daysMax, `Tối đa ${LIMITS.daysMax} ngày.`),
   arrival: z.enum(['', ...ARRIVALS]),
   note: z.string().max(LIMITS.stopNote, `Tối đa ${LIMITS.stopNote} ký tự.`),
+  arrivalNote: z.string().trim().max(LIMITS.arrivalNote, `Tối đa ${LIMITS.arrivalNote} ký tự.`),
 })
 
 export type StopFormIn = z.input<typeof stopSchema>

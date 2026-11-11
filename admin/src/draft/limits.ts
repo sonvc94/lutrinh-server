@@ -28,6 +28,7 @@ export const LIMITS = {
   daysMax: at(route, 'days').maximum as number,
   stopTitle: maxLength(at(stop, 'title')),
   stopNote: maxLength(at(stop, 'note')),
+  arrivalNote: maxLength(at(stop, 'arrivalNote')),
   stopMedia: at(stop, 'media').maxItems as number,
   stopsMin: at(schema as unknown as Json, 'properties', 'stops').minItems as number,
   stopsMax: at(schema as unknown as Json, 'properties', 'stops').maxItems as number,

@@ -31,6 +31,13 @@ spec change: the app's copy and tests must follow.
   ≤ 1000, stop title 1..80, note ≤ 2000, as the app's docs/02).
 - Stops: 2..200, `day` 1..30, `time` `HH:mm` or null (app: 08:00 + position in minutes),
   `arrival` = app TransportMode code or null, ≤ 30 media per stop.
+- `arrivalNote` (optional, added within formatVersion 1): a note on the travel from the previous
+  stop to this one, next to `arrival` ("Đường dốc khó đi", "Gửi xe phía đối diện, 30k"); trimmed,
+  1..1000 code points, absent (never `""` or null) when there is none. It belongs to the stop,
+  not to `legs[]`, so it also exists for train/plane/boat arrivals and survives leg recompute.
+  Never on the first stop: the server blocks publishing (`arrival_note_first_stop`, a publish
+  rule, not an integrity rule) and so never writes one there. Readers that predate the field and
+  reject unknown keys (the app's strict reader) refuse packages carrying it.
 - Legs: optional, one per stop at most, keyed by the arrival stop `to`; `path` is polyline6
   (empty unless `status` is `ok`); `source` is a router id (`valhalla`, `osrm`), `manual` (drawn
   in the admin) or `gpx` (cut from an imported track).
@@ -67,8 +74,8 @@ Problem codes, as reported by `lutrinh.core.package.check` and expected by `pack
 
 Schema failures are reported as `schema`; integrity rules run only on schema-valid documents.
 Publish-time rules live in `server/lutrinh/core/rules.py` (not in the vectors): days and times
-ascending within a day, package ≤ 300 MB, `route.json` ≤ 2 MB block publishing; warnings for a
-large package, missing/failed/car-fallback/long legs.
+ascending within a day, no `arrivalNote` on the first stop, package ≤ 300 MB, `route.json`
+≤ 2 MB block publishing; warnings for a large package, missing/failed/car-fallback/long legs.
 
 ## Codes
 

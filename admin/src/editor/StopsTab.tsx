@@ -278,6 +278,7 @@ function LegPanel(props: {
       ) : (
         <p className="muted">Tàu, máy bay, thuyền: không có đường bộ, vẽ nét đứt thẳng.</p>
       )}
+      {stop.arrivalNote && <p className={css.legNote}>{stop.arrivalNote}</p>}
       {props.error && (
         <div className={ui.notice} role="alert">
           {props.error}
@@ -455,6 +456,11 @@ function StopRow(props: {
               : 'không đường bộ'}
         </div>
       )}
+      {stop.arrivalNote && (
+        <div className={css.legNote} data-testid="leg-note">
+          {stop.arrivalNote}
+        </div>
+      )}
       <div className={props.selected ? `${css.row} ${css.rowOn}` : css.row} data-testid="stop-row">
         <button
           type="button"
@@ -484,7 +490,14 @@ function StopRow(props: {
 }
 
 function toForm(s: Stop): StopFormIn {
-  return { title: s.title, time: s.time ?? '', day: s.day, arrival: s.arrival ?? '', note: s.note }
+  return {
+    title: s.title,
+    time: s.time ?? '',
+    day: s.day,
+    arrival: s.arrival ?? '',
+    arrivalNote: s.arrivalNote ?? '',
+    note: s.note,
+  }
 }
 
 function StopForm({ stop, index, onRemove }: { stop: Stop; index: number; onRemove: () => void }) {
@@ -511,6 +524,7 @@ function StopForm({ stop, index, onRemove }: { stop: Stop; index: number; onRemo
               time: v.time || null,
               day: v.day,
               arrival: (v.arrival || null) as Arrival | null,
+              arrivalNote: v.arrivalNote || undefined,
               note: v.note,
             }),
           false,
@@ -528,6 +542,7 @@ function StopForm({ stop, index, onRemove }: { stop: Stop; index: number; onRemo
       cur.time === now.time &&
       Number(cur.day) === now.day &&
       cur.arrival === now.arrival &&
+      cur.arrivalNote.trim() === now.arrivalNote &&
       cur.note === now.note
     if (!same) reset(now)
   }, [stop, getValues, reset])
@@ -578,6 +593,25 @@ function StopForm({ stop, index, onRemove }: { stop: Stop; index: number; onRemo
           </Field>
         )}
       </div>
+      {(index > 0 || stop.arrivalNote) && (
+        <Field
+          label="Ghi chú chặng (đường từ điểm trước đến đây)"
+          htmlFor={id('arrivalNote')}
+          error={
+            e.arrivalNote?.message ??
+            (index === 0 ? 'Điểm xuất phát không có chặng đến: hãy xóa ghi chú này.' : undefined)
+          }
+        >
+          <textarea
+            id={id('arrivalNote')}
+            className={ui.input}
+            rows={2}
+            placeholder="Ví dụ: Đường dốc khó đi · Gửi xe phía đối diện, 30k"
+            aria-invalid={!!e.arrivalNote || index === 0}
+            {...register('arrivalNote')}
+          />
+        </Field>
+      )}
       <Field label="Ghi chú" htmlFor={id('note')} error={e.note?.message}>
         <textarea
           id={id('note')}

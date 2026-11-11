@@ -16,6 +16,7 @@ const SCREENS = '/Volumes/wdblack/tmp/lutrinh-admin-web/screens'
 const GPX = join(import.meta.dirname, 'fixtures', 'ba-diem-ha-noi.gpx')
 const ARCHIPELAGOS = join(import.meta.dirname, 'fixtures', 'hoang-sa-truong-sa.gpx')
 const TITLE = 'Ba điểm quanh Hồ Gươm'
+const LEG_NOTE = 'Đường dốc khó đi. Gửi xe phía đối diện, 30k'
 
 interface Creds {
   data: string
@@ -109,6 +110,21 @@ test('log in, import a 3-stop GPX, publish, and the code finds the route', async
   expect(errors, 'map worker / page errors').toEqual([])
   await shot(page, 'editor')
 
+  // B: a note on the travel into stop 2 (arrivalNote), saved with the draft and read back
+  await page.getByTestId('stop-row').nth(1).locator('button[aria-expanded]').click()
+  await page.getByLabel(/^Ghi chú chặng/).fill(LEG_NOTE)
+  await expect(page.getByTestId('save-status')).toHaveAttribute('data-status', 'saved')
+  await page.reload()
+  await expect(page.getByTestId('leg-note')).toHaveText(LEG_NOTE)
+  await page.getByTestId('stop-row').nth(1).locator('button[aria-expanded]').click()
+  await expect(page.getByLabel(/^Ghi chú chặng/)).toHaveValue(LEG_NOTE)
+  // the first stop has no travel into it, so no field there
+  await page.getByTestId('stop-row').nth(0).locator('button[aria-expanded]').click()
+  await expect(page.getByLabel(/^Ghi chú chặng/)).toHaveCount(0)
+  await page.getByTestId('stop-row').nth(1).locator('button[aria-expanded]').click()
+  await page.waitForTimeout(500)
+  await shot(page, 'stops-leg-note')
+
   // D: publish
   await page.getByRole('link', { name: 'Xuất bản & mã' }).click()
   const publish = page.getByRole('button', { name: /^Xuất bản v1/ })
@@ -136,6 +152,24 @@ test('log in, import a 3-stop GPX, publish, and the code finds the route', async
   const summary = JSON.parse(out) as { title?: string; stops?: number }
   console.log(`curl /api/v1/codes/${code} → title "${summary.title}", stops ${summary.stops}`)
   expect(summary.title).toBe(TITLE)
+  // …and the downloaded route.json carries the leg note on stop 2 only
+  const token = (JSON.parse(out) as { downloadToken: string }).downloadToken
+  const routeJson = JSON.parse(
+    execFileSync(
+      'curl',
+      [
+        '-s',
+        '-H',
+        'Accept: application/vnd.lutrinh.route+json;v=1',
+        `http://127.0.0.1:${c.port}/api/v1/dl/${token}/route`,
+      ],
+      { encoding: 'utf8' },
+    ),
+  ) as { stops: { arrivalNote?: string }[] }
+  console.log(
+    `route.json stops[1].arrivalNote → ${JSON.stringify(routeJson.stops[1]?.arrivalNote)}`,
+  )
+  expect(routeJson.stops.map((s) => s.arrivalNote ?? null)).toEqual([null, LEG_NOTE, null])
 
   // C: media; the worker step (offline routers, e2e/process_jobs.py) turns it into a server file
   await page.getByRole('link', { name: 'Ảnh/video' }).click()

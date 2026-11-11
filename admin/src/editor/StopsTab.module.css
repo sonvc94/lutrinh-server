@@ -138,6 +138,16 @@
   font-size: 15px;
   color: var(--signal-deep);
 }
+.legNote {
+  margin: 0 0 4px 52px;
+  font-size: 14px;
+  color: var(--ink-muted);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.legPanel .legNote {
+  margin: var(--s-xs) 0 0;
+}
 .row {
   display: flex;
   align-items: center;

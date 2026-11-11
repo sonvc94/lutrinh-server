@@ -15,6 +15,8 @@ export interface Stop {
   lat: number
   lng: number
   arrival: Arrival | null
+  /** Note on the travel from the previous stop to this one; absent (never '') when there is none. */
+  arrivalNote?: string
   media: string[]
 }
 
@@ -73,6 +75,9 @@ export function normalise(raw: Record<string, unknown>): DraftBody {
       lat: num(s.lat),
       lng: num(s.lng),
       arrival: typeof s.arrival === 'string' ? (s.arrival as Arrival) : null,
+      ...(typeof s.arrivalNote === 'string' && s.arrivalNote.trim()
+        ? { arrivalNote: s.arrivalNote }
+        : {}),
       media: Array.isArray(s.media) ? s.media.filter((m) => typeof m === 'string') : [],
     })),
     legs: legs.map((l) => ({
@@ -123,8 +128,15 @@ export function updateStop(
 ): DraftBody {
   return withStops(
     body,
-    body.stops.map((s) => (s.id === id ? { ...s, ...patch } : s)),
+    body.stops.map((s) => (s.id === id ? withoutEmptyNote({ ...s, ...patch }) : s)),
   )
+}
+
+/** `arrivalNote` is absent, never '' or undefined-valued, so the stored body keeps its shape. */
+function withoutEmptyNote(s: Stop): Stop {
+  if (s.arrivalNote) return s
+  const { arrivalNote: _, ...rest } = s
+  return rest
 }
 
 export function removeStop(body: DraftBody, id: string): DraftBody {
@@ -224,6 +236,8 @@ export function localProblems(body: DraftBody): string[] {
   let lastTime: string | null = null
   body.stops.forEach((s, i) => {
     if (!s.title.trim()) out.push(`Điểm ${i + 1} chưa có tên.`)
+    if (i === 0 && s.arrivalNote)
+      out.push('Điểm xuất phát không có chặng đến: hãy xóa ghi chú chặng của điểm 1.')
     if (s.day < prevDay) out.push(`Điểm ${i + 1}: ngày ${s.day} sau ngày ${prevDay}.`)
     if (s.day !== prevDay) lastTime = null
     prevDay = Math.max(prevDay, s.day)

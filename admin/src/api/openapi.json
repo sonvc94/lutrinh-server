@@ -1366,6 +1366,18 @@
       ],
       "title": "Arrival"
      },
+     "arrivalNote": {
+      "anyOf": [
+       {
+        "maxLength": 4000,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Arrivalnote"
+     },
      "day": {
       "title": "Day",
       "type": "integer"

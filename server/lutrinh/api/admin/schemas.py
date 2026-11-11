@@ -10,7 +10,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pydantic.alias_generators import to_camel
 
 
@@ -57,7 +57,15 @@ class StopIn(Model):
     lat: float
     lng: float
     arrival: str | None = None
+    # Note on the travel from the previous stop to this one. Trimmed; empty → absent (to_body).
+    # The 1000-character limit and "not on the first stop" are checked at publish (spec).
+    arrival_note: str | None = Field(default=None, max_length=4000)
     media: list[str] = Field(default_factory=list, max_length=30)
+
+    @field_validator("arrival_note")
+    @classmethod
+    def _trim_arrival_note(cls, v: str | None) -> str | None:
+        return (v.strip() or None) if v is not None else None
 
 
 class LegIn(Model):
@@ -82,7 +90,11 @@ class DraftBody(Model):
     legs: list[LegIn] = Field(default_factory=list, max_length=199)
 
     def to_body(self) -> dict[str, Any]:
-        return self.model_dump(by_alias=True)
+        body = self.model_dump(by_alias=True)
+        for stop in body["stops"]:
+            if stop["arrivalNote"] is None:
+                del stop["arrivalNote"]  # absent, never null: old drafts keep their shape
+        return body
 
 
 class DraftOut(Model):

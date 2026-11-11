@@ -7,13 +7,16 @@ Draft document (``drafts.body``; the admin API writes it whole)::
 
     {"title", "description", "days", "cover": media id | null, "readyMade": key | null,
      "credits": [str],
-     "stops": [{"id", "day", "time", "title", "note", "lat", "lng", "arrival", "media": [ids]}],
+     "stops": [{"id", "day", "time", "title", "note", "lat", "lng", "arrival",
+                "arrivalNote"?, "media": [ids]}],
      "legs":  [{"to", "profile", "usedProfile", "source", "status", "distanceM", "durationS",
                 "path"}]}
 
 What the build adds: route id/version/publishedAt, media entries (sha256, size, dimensions,
 credit) from the media rows, ``region.bounds`` (box around the stops and the ``ok`` leg paths),
 ``size``. Text is trimmed, coordinates are rounded to 6 decimals, legs are put in stop order.
+``arrivalNote`` (note on the travel into the stop) is written only when it is non-empty after
+trimming; otherwise the key is absent, so packages without notes keep their bytes.
 """
 
 from __future__ import annotations
@@ -184,6 +187,24 @@ def _text(value: Any) -> Any:
     return value.strip() if isinstance(value, str) else value
 
 
+def _stop(s: Mapping[str, Any]) -> dict[str, Any]:
+    out = {
+        "id": s.get("id"),
+        "day": s.get("day"),
+        "time": s.get("time"),
+        "title": _text(s.get("title")),
+        "note": _text(s.get("note", "")),
+        "lat": _coord(s.get("lat")),
+        "lng": _coord(s.get("lng")),
+        "arrival": s.get("arrival"),
+        "media": list(s.get("media") or []),
+    }
+    arrival_note = _text(s.get("arrivalNote"))
+    if arrival_note not in (None, ""):
+        out["arrivalNote"] = arrival_note
+    return out
+
+
 def _coord(value: Any) -> Any:
     return round(float(value), COORD_DECIMALS) if isinstance(value, (int, float)) else value
 
@@ -231,20 +252,7 @@ def build(
     media: Mapping[str, MediaInfo],
 ) -> BuiltPackage:
     """Draft → canonical ``route.json``. Raises ``PackageError`` listing every problem."""
-    stops = [
-        {
-            "id": s.get("id"),
-            "day": s.get("day"),
-            "time": s.get("time"),
-            "title": _text(s.get("title")),
-            "note": _text(s.get("note", "")),
-            "lat": _coord(s.get("lat")),
-            "lng": _coord(s.get("lng")),
-            "arrival": s.get("arrival"),
-            "media": list(s.get("media") or []),
-        }
-        for s in draft.get("stops") or []
-    ]
+    stops = [_stop(s) for s in draft.get("stops") or []]
     order = {s["id"]: i for i, s in enumerate(stops)}
     legs = sorted(
         (

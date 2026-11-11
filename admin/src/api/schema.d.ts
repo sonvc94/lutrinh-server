@@ -1005,6 +1005,8 @@ export interface components {
         StopIn: {
             /** Arrival */
             arrival?: string | null;
+            /** Arrivalnote */
+            arrivalNote?: string | null;
             /** Day */
             day: number;
             /** Id */

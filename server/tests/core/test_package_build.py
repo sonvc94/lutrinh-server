@@ -113,3 +113,15 @@ def test_read_rejects_bad_json_and_newer_format() -> None:
 
 def test_utc_constant_used() -> None:
     assert package.format_timestamp(datetime(2026, 1, 1, tzinfo=UTC)) == "2026-01-01T00:00:00Z"
+
+
+def test_arrival_note_trimmed_and_absent_when_empty() -> None:
+    plain = build()
+    d = draft()
+    d["stops"][1]["arrivalNote"] = "  Gửi xe phía đối diện, 30k \n"
+    doc = build(d).document
+    assert doc["stops"][1]["arrivalNote"] == "Gửi xe phía đối diện, 30k"
+    assert "arrivalNote" not in doc["stops"][0]
+    for empty in ("", "   ", None):
+        d["stops"][1]["arrivalNote"] = empty
+        assert build(d).route_json == plain.route_json  # no note → same bytes as before
